@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RADIOTALKER // CYBER_OS</title>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getDatabase, ref, set, onValue, push, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        const firebaseConfig = {
+          apiKey: "AIzaSyD2WRzWp0pl2niRizDPF_kqUrHB4_gY8gA",
+          authDomain: "radio-c49c0.firebaseapp.com",
+          databaseURL: "https://radio-c49c0-default-rtdb.firebaseio.com",
+          projectId: "radio-c49c0",
+          storageBucket: "radio-c49c0.firebasestorage.app",
+          messagingSenderId: "231017755170",
+          appId: "1:231017755170:web:02df1616290fe2edcdd07b"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getDatabase(app);
+        const peer = new Peer();
+        let myUid, myPeerId, currentCall;
+
+        // AUTH & SIGNALING
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                myUid = user.uid;
+                document.getElementById('status').innerText = "[ SYSTEM_READY ]";
+                setupListeners();
+            } else { signInAnonymously(auth); }
+        });
+
+        peer.on('open', (id) => {
+            myPeerId = id;
+            document.getElementById('my-id-display').innerText = id;
+            if(myUid) set(ref(db, `users/${myUid}`), { peerId: id, status: "online" });
+        });
+
+        // FRIEND REQUESTS & CHAT
+        window.sendRequest = () => {
+            const target = document.getElementById('target-input').value;
+            if(!target) return;
+            push(ref(db, `requests/${target}`), { from: myPeerId, fromUid: myUid });
+            alert("SIGNAL SENT TO TARGET");
+        };
+
+        function setupListeners() {
+            onValue(ref(db, `requests/${myPeerId}`), (snap) => {
+                const data = snap.val();
+                const reqDiv = document.getElementById('req-list');
+                reqDiv.innerHTML = '';
+                for(let id in data) {
+                    reqDiv.innerHTML += `<div class="req-card">REQ_FROM: ${data[id].from} 
+                        <button onclick="accept('${data[id].from}')">ACCEPT</button></div>`;
+                }
+            });
+        }
+
+        // CALLING ENGINE
+        window.startMediaCall = (isVideo) => {
+            const target = document.getElementById('target-input').value;
+            navigator.mediaDevices.getUserMedia({video: isVideo, audio: true}).then((stream) => {
+                const call = peer.call(target, stream);
+                setupCallUI(call);
+            });
+        };
+
+        peer.on('call', (call) => {
+            if(confirm("INCOMING_SIGNAL. ACCEPT?")) {
+                navigator.mediaDevices.getUserMedia({video: true, audio: true}).then((stream) => {
+                    call.answer(stream);
+                    setupCallUI(call);
+                });
+            }
+        });
+
+        function setupCallUI(call) {
+            document.getElementById('call-overlay').style.display = 'flex';
+            call.on('stream', (remoteStream) => {
+                document.getElementById('remote-video').srcObject = remoteStream;
+            });
+        }
+
+        window.endCall = () => location.reload();
+        window.shareId = () => {
+            navigator.clipboard.writeText(myPeerId);
+            alert("ID COPIED TO NEURAL LINK");
+        };
+    </script>
+    <style>
+        :root { --neon-blue: #00f3ff; --neon-pink: #ff0055; --dark: #050505; }
+        body { background: var(--dark); color: var(--neon-blue); font-family: 'Orbitron', sans-serif; margin: 0; padding: 15px; overflow-x: hidden; }
+        .panel { border: 2px solid var(--neon-pink); background: rgba(255, 0, 85, 0.05); box-shadow: 0 0 15px var(--neon-pink); padding: 15px; margin-bottom: 15px; clip-path: polygon(0 0, 100% 0, 100% 95%, 95% 100%, 0 100%); }
+        .glitch-text { font-weight: bold; text-transform: uppercase; letter-spacing: 2px; color: var(--neon-pink); text-shadow: 2px 2px var(--neon-blue); }
+        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+        .cyber-btn { border: 1px solid var(--neon-blue); background: transparent; color: var(--neon-blue); padding: 12px; cursor: pointer; font-family: 'Orbitron'; font-size: 10px; transition: 0.3s; }
+        .cyber-btn:hover { background: var(--neon-blue); color: #000; box-shadow: 0 0 20px var(--neon-blue); }
+        input { width: 100%; background: #111; border: 1px solid var(--neon-pink); color: #fff; padding: 12px; box-sizing: border-box; margin: 10px 0; font-family: 'Orbitron'; }
+        #call-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; display: none; flex-direction: column; z-index: 100; }
+        video { width: 100%; height: 70%; object-fit: cover; border-bottom: 2px solid var(--neon-blue); }
+        .id-badge { background: var(--neon-blue); color: #000; padding: 5px 10px; font-size: 12px; margin-top: 5px; display: inline-block; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="panel">
+        <div class="glitch-text">RADIOTALKER // V1.0</div>
+        <p id="status">[ INITIALIZING_NEURAL_LINK... ]</p>
+        <div>YOUR_SIGNAL_ID:</div>
+        <div class="id-badge" onclick="shareId()" id="my-id-display">FETCHING...</div>
+        <div style="font-size: 8px; margin-top: 5px;">(TAP TO COPY ID)</div>
+    </div>
+
+    <div class="panel">
+        <div class="glitch-text">NETWORK_SCANNER</div>
+        <input type="text" id="target-input" placeholder="ENTER_TARGET_SIGNAL_">
+        <button class="cyber-btn" style="width:100%" onclick="sendRequest()">SEND_FRIEND_SIGNAL</button>
+        <div class="btn-grid">
+            <button class="cyber-btn" onclick="startMediaCall(false)">📞 VOICE_CALL</button>
+            <button class="cyber-btn" onclick="startMediaCall(true)">📹 VIDEO_LINK</button>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="glitch-text">INCOMING_SIGNALS</div>
+        <div id="req-list" style="font-size: 10px; margin-top: 10px;">[ NO_ACTIVE_REQUESTS ]</div>
+    </div>
+
+    <div id="call-overlay">
+        <video id="remote-video" autoplay playsinline></video>
+        <div style="padding: 20px; text-align: center;">
+            <div class="glitch-text" style="margin-bottom: 20px;">LINK_ESTABLISHED</div>
+            <button class="cyber-btn" style="border-color: var(--neon-pink); color: var(--neon-pink); width: 80%;" onclick="endCall()">TERMINATE_LINK</button>
+        </div>
+    </div>
+</body>
+</html>
