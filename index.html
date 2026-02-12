@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>PRIVATE_MSG // STABLE_MASTER</title>
+    <title>PRIVATE_MSG // SECURE_UPLINK</title>
     
     <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
     <script>
@@ -15,11 +15,14 @@
         :root { --pink: #ff0055; --blue: #00f2ff; --bg: #050505; --green: #00ff00; --grey: #444; }
         body { background: black url('https://wallpaperaccess.com/full/1324706.jpg') no-repeat center center fixed; background-size: cover; color: white; font-family: 'Courier New', monospace; margin: 0; overflow: hidden; height: 100vh; }
         
-        #glitch-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 2000; display: none; align-items: center; justify-content: center; color: black; font-weight: bold; animation: glitchSync 0.2s infinite; }
+        /* Strict Auth Gate */
+        #auth-gate { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: black; z-index: 5000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .os-container { display: none; height: 100vh; grid-template-columns: 80px 1fr; border: 4px solid var(--pink); box-sizing: border-box; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); }
+        
+        #glitch-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 6000; display: none; align-items: center; justify-content: center; color: black; font-weight: bold; animation: glitchSync 0.2s infinite; }
         @keyframes glitchSync { 0% { background: var(--pink); transform: skew(3deg); } 50% { background: var(--blue); transform: skew(-3deg); } 100% { background: white; } }
 
         #call-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 1000; display: none; flex-direction: column; align-items: center; justify-content: center; border: 4px solid var(--blue); }
-        .os-container { height: 100vh; display: grid; grid-template-columns: 80px 1fr; border: 4px solid var(--pink); box-sizing: border-box; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); }
         .sidebar { border-right: 2px solid var(--pink); display: flex; flex-direction: column; padding: 5px; height: 100%; background: rgba(0,0,0,0.9); }
         .friend-circle { width: 50px; height: 50px; border: 2px solid var(--blue); border-radius: 50%; margin: 15px auto; display: flex; align-items: center; justify-content: center; position: relative; background: black; cursor: pointer; }
         .status-dot { position: absolute; bottom: 2px; right: 2px; width: 12px; height: 12px; border-radius: 50%; border: 2px solid black; }
@@ -28,7 +31,7 @@
 
         #chat-window { flex: 1; display: none; flex-direction: column; height: 100%; position: relative; }
         #messages { flex: 1; overflow-y: auto; padding: 15px; font-size: 14px; display: flex; flex-direction: column; padding-bottom: 120px; }
-        .input-dock { position: absolute; bottom: 0; left: 0; width: 100%; display: flex; align-items: center; border-top: 2px solid var(--blue); background: black; padding: 12px; box-sizing: border-box; }
+        .input-dock { position: absolute; bottom: 0; left: 0; width: 100%; display: flex; align-items: center; border-top: 2px solid var(--blue); background: black; padding: 10px; box-sizing: border-box; }
         .cyber-btn { background: transparent; color: var(--pink); border: 2px solid var(--pink); padding: 8px 12px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 10px; }
         
         .tick { position: absolute; bottom: 2px; right: 5px; font-size: 10px; font-weight: bold; }
@@ -38,30 +41,36 @@
 </head>
 <body>
 
-<div id="glitch-overlay">UPLINK_DATA_VOID</div>
+<div id="glitch-overlay">UPLINK_TERMINATED</div>
+
+<div id="auth-gate">
+    <h2 style="color: var(--pink); letter-spacing: 5px;">IDENTITY_ACCESS</h2>
+    <input type="text" id="auth-user" placeholder="USERNAME" style="background: black; border: 1px solid var(--blue); color: white; padding: 15px; width: 250px; margin-bottom: 10px; text-transform: lowercase;">
+    <input type="password" id="auth-pass" placeholder="PASSWORD" style="background: black; border: 1px solid var(--blue); color: white; padding: 15px; width: 250px; margin-bottom: 20px;">
+    <button class="cyber-btn" onclick="handleAuth()" style="width: 250px;">INITIALIZE_IDENTITY</button>
+</div>
 
 <div id="call-screen">
-    <div style="font-size: 10px; color: var(--blue); letter-spacing: 2px;">SECURE_VOICE_BRIDGE</div>
-    <h2 id="caller-display" style="color: white; margin-top: 20px; letter-spacing: 5px;">---</h2>
+    <h2 id="caller-display" style="color: white; letter-spacing: 5px;">---</h2>
     <div id="call-timer" style="font-size: 28px; color: var(--blue); margin: 20px 0;">00:00</div>
     <div style="display:flex; flex-direction:column; gap:20px;">
-        <button id="ans-btn" class="cyber-btn" style="color:var(--green); border-color:var(--green); width:240px;" onclick="acceptUplink()">ACCEPT_SIGNAL</button>
+        <button id="ans-btn" class="cyber-btn" style="color:var(--green); border-color:var(--green); width:240px;" onclick="acceptUplink()">ACCEPT_LINK</button>
         <button class="cyber-btn" style="color:red; border-color:red; width:240px;" onclick="terminateGlobalCall()">TERMINATE</button>
     </div>
 </div>
 
-<audio id="remote-audio-bridge" autoplay></audio>
+<audio id="chrome-audio-bridge" autoplay></audio>
 
-<div class="os-container">
+<div class="os-container" id="main-view">
     <div class="sidebar">
         <div id="friends-list"></div>
-        <button class="cyber-btn" onclick="logout()" style="margin-top:auto; font-size:7px;">LOGOUT</button>
+        <button class="cyber-btn" onclick="logout()" style="margin-top:auto; font-size:7px;">DISCONNECT</button>
     </div>
     <div class="main-view" style="display: flex; flex-direction: column; height: 100%; overflow: hidden;">
         <div id="init-screen" style="padding: 20px;">
-            <div style="font-size: 10px; color: var(--pink); margin-bottom: 20px;">SYSTEM_ID: <span id="user-display">PENDING...</span></div>
+            <div style="font-size: 10px; color: var(--pink); margin-bottom: 20px;">ACTIVE_ID: <span id="user-display">---</span></div>
             <input type="text" id="target-user" placeholder="SEARCH_ID..." style="border-bottom: 2px solid var(--blue); width: 100%; background:transparent; color:var(--blue); padding:10px;">
-            <button class="cyber-btn" onclick="sendFriendRequest()" style="width: 100%; margin-top:15px;">ADD_IDENTITY</button>
+            <button class="cyber-btn" onclick="sendFriendRequest()" style="width: 100%; margin-top:15px;">ADD_FRIEND</button>
             <div id="req-list" style="margin-top: 30px;"></div>
         </div>
         <div id="chat-window">
@@ -80,7 +89,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getDatabase, ref, set, push, onValue, remove, onDisconnect, update, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    import { getDatabase, ref, set, push, onValue, remove, onDisconnect, update, serverTimestamp, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
     import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
     const firebaseConfig = {
@@ -97,29 +106,50 @@
     const auth = getAuth(app);
     let currentUid = "", currentUsername = "", partnerUid = "", globalTimerRef = null;
 
+    // Viewport Docking
+    if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', () => {
+            document.getElementById('bottom-dock').style.bottom = `${window.innerHeight - window.visualViewport.height}px`;
+        });
+    }
+
     onAuthStateChanged(auth, async (user) => { 
         if (!user) await signInAnonymously(auth);
         const saved = localStorage.getItem('rt_session');
         if (saved) { 
             const d = JSON.parse(saved); currentUsername = d.u; currentUid = d.uid;
-            initHardwareSync();
+            unlockInterface();
         }
     });
 
-    function initHardwareSync() {
+    window.handleAuth = async () => {
+        const u = document.getElementById('auth-user').value.toLowerCase().trim();
+        const p = document.getElementById('auth-pass').value.trim();
+        if(!u || !p) return;
+        const snap = await get(ref(db, `users/${u}`));
+        if(snap.exists() && snap.val().password !== p) return alert("BAD_KEY");
+        const uid = snap.exists() ? snap.val().uid : auth.currentUser.uid;
+        if(!snap.exists()) await set(ref(db, `users/${u}`), { uid, password: p });
+        localStorage.setItem('rt_session', JSON.stringify({u, uid}));
+        location.reload(); 
+    };
+
+    function unlockInterface() {
+        document.getElementById('auth-gate').style.display = 'none';
+        document.getElementById('main-view').style.display = 'grid';
         document.getElementById('user-display').innerText = currentUsername.toUpperCase();
-        // Socket Presence
+        
         onValue(ref(db, ".info/connected"), (snap) => {
             if (snap.val() === true) {
-                set(ref(db, `status/${currentUid}`), { state: "online", lastSeen: serverTimestamp() });
-                onDisconnect(ref(db, `status/${currentUid}`)).set({ state: "offline", lastSeen: serverTimestamp() });
+                set(ref(db, `status/${currentUid}`), { state: "online" });
+                onDisconnect(ref(db, `status/${currentUid}`)).set({ state: "offline" });
             }
         });
         listenFriends(); listenSignals();
         window.OneSignal.push(() => OneSignal.setExternalUserId(currentUid));
     }
 
-    // Fix: Mutual Termination & Global Sync Timer
+    // VOIP Engine Fix
     function listenSignals() {
         onValue(ref(db, `signals/${currentUid}`), (snap) => {
             if (snap.exists()) {
@@ -129,7 +159,7 @@
                     document.getElementById('caller-display').innerText = s.from.toUpperCase();
                     document.getElementById('call-screen').style.display = 'flex';
                     document.getElementById('ans-btn').style.display = 'block';
-                } else if (s.type === 'ENDED') { resetMutualUI(); }
+                } else if (s.type === 'ENDED') { resetGlobalCallUI(); }
             }
         });
     }
@@ -159,17 +189,16 @@
 
     window.terminateGlobalCall = async () => {
         await set(ref(db, `signals/${partnerUid}`), { type: 'ENDED' });
-        resetMutualUI();
+        resetGlobalCallUI();
     };
 
-    function resetMutualUI() {
+    function resetGlobalCallUI() {
         clearInterval(globalTimerRef);
         document.getElementById('call-screen').style.display = 'none';
         remove(ref(db, `signals/${currentUid}`));
         document.getElementById('call-timer').innerText = "00:00";
     }
 
-    // Fix: Actual Seen Status
     function openChat(name, uid) {
         partnerUid = uid;
         document.getElementById('init-screen').style.display = 'none';
