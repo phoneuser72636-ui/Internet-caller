@@ -27,26 +27,26 @@
         .header { padding: 14px; border-bottom: 2px solid var(--pink); display: flex; justify-content: space-between; font-size: 11px; background: black; }
         .main-view { display: flex; flex-direction: column; height: 100%; overflow: hidden; }
         #chat-window { flex: 1; display: none; flex-direction: column; background: rgba(0,0,0,0.8); }
-        .call-controls { display: flex; justify-content: space-around; padding: 12px; border-bottom: 1px solid var(--blue); }
+        .call-controls { display: flex; justify-content: space-around; padding: 12px; border-bottom: 1px solid var(--blue); background: rgba(0, 242, 255, 0.1); }
         #messages { flex: 1; overflow-y: auto; padding: 15px; font-size: 14px; display: flex; flex-direction: column; }
         .msg { margin-bottom: 10px; padding: 10px; border-radius: 5px; max-width: 80%; border: 1px solid transparent; }
-        .msg.me { align-self: flex-end; border-color: var(--blue); color: var(--blue); }
-        .msg.them { align-self: flex-start; border-color: var(--pink); color: var(--pink); }
-        .input-bar { display: flex; border-top: 2px solid var(--blue); background: black; padding: 10px; }
-        input { background: transparent; border: none; color: var(--blue); padding: 10px; flex: 1; outline: none; font-size: 16px; font-family: 'Courier New'; }
-        .cyber-btn { background: transparent; color: var(--pink); border: 2px solid var(--pink); padding: 10px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 11px; }
+        .msg.me { align-self: flex-end; border-color: var(--blue); color: var(--blue); background: rgba(0,242,255,0.05); }
+        .msg.them { align-self: flex-start; border-color: var(--pink); color: var(--pink); background: rgba(255,0,85,0.05); }
+        .input-bar { display: flex; border-top: 2px solid var(--blue); background: black; padding: 8px; }
+        input { background: transparent; border: none; color: var(--blue); padding: 15px; flex: 1; outline: none; font-size: 16px; font-family: 'Courier New'; }
+        .cyber-btn { background: transparent; color: var(--pink); border: 2px solid var(--pink); padding: 8px 12px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 10px; }
     </style>
 </head>
 <body>
 
 <div class="scanlines"></div>
-<div id="splash">INITIALIZING_UPLINK...</div>
+<div id="splash">RECONNECTING_UPLINK...</div>
 
 <div id="auth-overlay" style="display:none;">
     <h2 style="color: var(--pink);">IDENTITY_ACCESS</h2>
     <input type="text" id="auth-user" placeholder="USERNAME" style="border: 1px solid var(--blue); background: black; color: white; padding: 12px; width: 70%;">
     <input type="password" id="auth-pass" placeholder="PASSWORD" style="border: 1px solid var(--blue); background: black; color: white; padding: 12px; width: 70%; margin-top:10px;">
-    <button class="cyber-btn" onclick="handleAuth()" style="margin-top:20px; width: 70%;">SECURE_LOGIN</button>
+    <button class="cyber-btn" onclick="handleAuth()" style="margin-top:20px; width: 70%;">INITIALIZE_SESSION</button>
 </div>
 
 <div class="os-container">
@@ -58,20 +58,20 @@
     <div class="main-view">
         <div class="header">
             <span id="user-display">SCANNING...</span>
-            <span onclick="logout()" style="color: var(--pink); cursor: pointer;">[LOGOUT]</span>
+            <span onclick="logout()" style="color: var(--pink); cursor: pointer;">[DISCONNECT]</span>
         </div>
         
         <div id="init-screen" style="padding: 20px;">
             <input type="text" id="target-user" placeholder="TARGET_USERNAME..." style="border-bottom: 2px solid var(--blue); width: 100%; background:transparent; color:var(--blue);">
-            <button class="cyber-btn" onclick="sendFriendRequest()" style="width: 100%; margin-top: 15px;">TRANSMIT_REQUEST</button>
+            <button class="cyber-btn" onclick="sendFriendRequest()" style="width: 100%; margin-top: 15px;">TRANSMIT_ADD_SIGNAL</button>
             <div id="req-list" style="margin-top: 25px;"></div>
         </div>
 
         <div id="chat-window">
             <div class="call-controls">
-                <button class="cyber-btn" style="color: #00ff00;" onclick="triggerCall('VOICE')">VOICE</button>
-                <button class="cyber-btn" style="color: var(--blue);" onclick="triggerCall('VIDEO')">VIDEO</button>
-                <button class="cyber-btn" onclick="goBack()">BACK_TO_HOME</button>
+                <button class="cyber-btn" style="color: #00ff00; border-color: #00ff00;" onclick="triggerCall('VOICE')">VOICE_CALL</button>
+                <button class="cyber-btn" style="color: var(--blue); border-color: var(--blue);" onclick="triggerCall('VIDEO')">VIDEO_CALL</button>
+                <button class="cyber-btn" onclick="exitChat()">EXIT_CHANNEL</button>
             </div>
             <div id="messages"></div>
             <div class="input-bar">
@@ -134,35 +134,73 @@
         document.getElementById('user-display').innerText = `ID: ${u.toUpperCase()}`;
         onDisconnect(ref(db, `status/${uid}`)).set({ state: "offline" });
         set(ref(db, `status/${uid}`), { state: "online" });
-        listenFriends(); listenRequests();
+        
+        listenFriends(); 
+        listenRequests(); 
+        listenIncomingCalls(); // Global call listener
         window.OneSignal.push(() => OneSignal.setExternalUserId(uid));
     }
 
-    window.goBack = () => {
+    // Fixed "Back" Logic
+    window.exitChat = () => {
         document.getElementById('chat-window').style.display = 'none';
         document.getElementById('init-screen').style.display = 'block';
-        document.getElementById('user-display').innerText = `ID: ${currentUsername.toUpperCase()}`;
         partnerUid = "";
+        document.getElementById('user-display').innerText = `ID: ${currentUsername.toUpperCase()}`;
+    };
+
+    // Global Incoming Call Listener
+    function listenIncomingCalls() {
+        onValue(ref(db, `calls/${currentUid}`), (snapshot) => {
+            if (snapshot.exists()) {
+                const callData = snapshot.val();
+                if (localStorage.getItem('rt_ring')) ringtone.play(); else chirp.play();
+                alert(`INCOMING ${callData.type} FROM: ${callData.from.toUpperCase()}`);
+                // Auto-open chat if a call is detected
+                openChat(callData.from, callData.fromUid);
+                // Clear the signal after receiving it
+                remove(ref(db, `calls/${currentUid}`));
+            }
+        });
+    }
+
+    window.triggerCall = (type) => {
+        if(!partnerUid) return;
+        // 1. Write to Database Signal Folder
+        set(ref(db, `calls/${partnerUid}`), { 
+            from: currentUsername, fromUid: currentUid, type: type, time: serverTimestamp() 
+        });
+        // 2. Send Push Notification
+        fetch("https://onesignal.com/api/v1/notifications", {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                app_id: "c00af28f-f943-4a78-aa65-1629d000bbab",
+                include_external_user_ids: [partnerUid],
+                priority: 10,
+                headings: {"en": `INCOMING ${type}`},
+                contents: {"en": `${currentUsername.toUpperCase()} IS SIGNALING...`}
+            })
+        });
     };
 
     window.sendFriendRequest = async () => {
         const t = document.getElementById('target-user').value.toLowerCase().trim();
+        if(t === currentUsername) return;
         const snap = await get(ref(db, `users/${t}`));
-        if(!snap.exists()) return alert("SIGNAL_LOST");
+        if(!snap.exists()) return alert("SIGNAL_LOST: TARGET_NOT_FOUND");
         set(ref(db, `requests/${snap.val().uid}/${currentUid}`), { from: currentUsername, fromUid: currentUid });
-        alert("REQUEST_TRANSMITTED");
     };
 
     function listenRequests() {
         onValue(ref(db, `requests/${currentUid}`), (snap) => {
             const list = document.getElementById('req-list');
-            list.innerHTML = '<span style="color:#555; font-size:10px;">INCOMING_SIGNALS:</span>';
+            list.innerHTML = '<span style="font-size:10px; color:#666;">INCOMING_REQUESTS:</span>';
             snap.forEach((child) => {
                 const r = child.val();
-                if(localStorage.getItem('rt_ring')) ringtone.play(); else chirp.play();
                 const div = document.createElement('div');
                 div.innerHTML = `<span style="font-size:11px;">REQ: ${r.from}</span> <button class="cyber-btn" onclick="accept('${r.from}','${r.fromUid}')">ACCEPT</button>`;
                 list.appendChild(div);
+                if(localStorage.getItem('rt_ring')) ringtone.play(); else chirp.play();
             });
         });
     }
@@ -223,19 +261,6 @@
             })
         });
         document.getElementById('msg-input').value = '';
-    };
-
-    window.triggerCall = (type) => {
-        fetch("https://onesignal.com/api/v1/notifications", {
-            method: "POST", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                app_id: "c00af28f-f943-4a78-aa65-1629d000bbab",
-                include_external_user_ids: [partnerUid],
-                priority: 10,
-                headings: {"en": `INCOMING ${type}`},
-                contents: {"en": `${currentUsername.toUpperCase()} IS SIGNALING...`}
-            })
-        });
     };
 
     window.saveRing = (i) => {
