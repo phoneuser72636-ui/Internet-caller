@@ -12,42 +12,46 @@
     </script>
 
     <style>
-        :root { --pink: #ff0055; --blue: #00f2ff; --bg: #050505; --glow: 0 0 15px rgba(255, 0, 85, 0.4); }
+        :root { --pink: #ff0055; --blue: #00f2ff; --bg: #050505; --glow: 0 0 10px rgba(255, 0, 85, 0.5); }
         body { 
             background: black url('https://wallpaperaccess.com/full/1324706.jpg') no-repeat center center fixed; 
             background-size: cover; color: white; font-family: 'Courier New', monospace; margin: 0; overflow: hidden; 
         }
         
-        .scanlines { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%); background-size: 100% 4px; pointer-events: none; z-index: 100; opacity: 0.2; }
+        .scanlines { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.15) 50%); background-size: 100% 4px; pointer-events: none; z-index: 100; opacity: 0.2; }
 
         .os-container { height: 100vh; display: grid; grid-template-columns: 75px 1fr; border: 4px solid var(--pink); box-sizing: border-box; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); }
         
-        /* Sidebar (WhatsApp-Style List) */
+        /* Sidebar Icons */
         .sidebar { border-right: 2px solid var(--pink); display: flex; flex-direction: column; padding: 5px; background: rgba(0,0,0,0.9); }
-        .friend-circle { width: 45px; height: 45px; border: 2px solid var(--blue); border-radius: 50%; margin: 10px auto; display: flex; align-items: center; justify-content: center; position: relative; cursor: pointer; transition: 0.3s; background: black; }
-        .friend-circle:hover { box-shadow: 0 0 15px var(--blue); transform: scale(1.1); }
-        .status-dot { position: absolute; bottom: 2px; right: 2px; width: 10px; height: 10px; border-radius: 50%; border: 1px solid black; }
+        .friend-circle { width: 48px; height: 48px; border: 2px solid var(--blue); border-radius: 50%; margin: 12px auto; display: flex; align-items: center; justify-content: center; position: relative; cursor: pointer; transition: 0.2s; background: black; }
+        .friend-circle:hover { box-shadow: 0 0 15px var(--blue); transform: scale(1.05); }
+        .status-dot { position: absolute; bottom: 2px; right: 2px; width: 11px; height: 11px; border-radius: 50%; border: 1.5px solid black; }
         .online { background: #00ff00; box-shadow: 0 0 8px #00ff00; }
         .offline { background: #ff0000; }
 
-        /* Main Content & Chat */
-        .header { padding: 12px; border-bottom: 2px solid var(--pink); display: flex; justify-content: space-between; font-size: 11px; background: black; letter-spacing: 1px; }
+        /* Login UI (Compact Mobile Size) */
+        #auth-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 200; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .login-box { width: 80%; max-width: 300px; display: flex; flex-direction: column; gap: 12px; }
+
+        /* Main Viewport */
+        .header { padding: 14px; border-bottom: 2px solid var(--pink); display: flex; justify-content: space-between; font-size: 11px; background: black; letter-spacing: 1px; }
         .main-view { display: flex; flex-direction: column; height: 100%; overflow: hidden; }
         
         #chat-window { flex: 1; display: none; flex-direction: column; background: rgba(0,0,0,0.7); }
-        .call-controls { display: flex; justify-content: space-around; padding: 10px; border-bottom: 1px solid var(--blue); background: rgba(0, 242, 255, 0.05); }
+        .call-controls { display: flex; justify-content: space-around; padding: 12px; border-bottom: 1px solid var(--blue); background: rgba(0,242,255,0.05); }
         
-        #messages { flex: 1; overflow-y: auto; padding: 15px; font-size: 14px; }
-        .msg { margin-bottom: 8px; padding: 8px; border-radius: 4px; max-width: 80%; line-height: 1.4; }
-        .msg.me { align-self: flex-end; border-right: 3px solid var(--blue); color: var(--blue); text-align: right; }
-        .msg.them { align-self: flex-start; border-left: 3px solid var(--pink); color: var(--pink); }
+        #messages { flex: 1; overflow-y: auto; padding: 15px; font-size: 14px; display: flex; flex-direction: column; }
+        .msg { margin-bottom: 10px; padding: 10px; border-radius: 5px; max-width: 80%; line-height: 1.4; border: 1px solid transparent; }
+        .msg.me { align-self: flex-end; border-color: var(--blue); color: var(--blue); text-align: right; background: rgba(0,242,255,0.05); }
+        .msg.them { align-self: flex-start; border-color: var(--pink); color: var(--pink); background: rgba(255,0,85,0.05); }
 
-        .input-bar { display: flex; border-top: 2px solid var(--blue); background: black; padding: 5px; }
+        .input-bar { display: flex; border-top: 2px solid var(--blue); background: black; padding: 8px; }
         input { background: transparent; border: none; color: var(--blue); padding: 15px; flex: 1; font-family: 'Courier New'; outline: none; font-size: 16px; }
         
-        .cyber-btn { background: transparent; color: var(--pink); border: 2px solid var(--pink); padding: 8px 15px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 10px; box-shadow: var(--glow); }
+        .cyber-btn { background: transparent; color: var(--pink); border: 2px solid var(--pink); padding: 10px 15px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 11px; box-shadow: var(--glow); transition: 0.2s; }
+        .cyber-btn:hover { background: var(--pink); color: black; }
         
-        #auth-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 200; display: flex; flex-direction: column; align-items: center; justify-content: center; }
     </style>
 </head>
 <body>
@@ -55,11 +59,12 @@
 <div class="scanlines"></div>
 
 <div id="auth-overlay">
-    <h2 style="color: var(--pink); text-shadow: 0 0 10px var(--pink);">IDENTITY_ACCESS</h2>
-    <input type="text" id="auth-user" placeholder="USERNAME" style="border: 1px solid var(--blue); margin-bottom: 10px; width: 70%;">
-    <input type="password" id="auth-pass" placeholder="PASSWORD" style="border: 1px solid var(--blue); margin-bottom: 15px; width: 70%;">
-    <button class="cyber-btn" onclick="handleAuth()">INITIALIZE_UPLINK</button>
-    <p id="auth-status" style="font-size: 10px; margin-top: 10px; color: var(--blue);"></p>
+    <div class="login-box">
+        <h2 style="color: var(--pink); text-shadow: 0 0 10px var(--pink); text-align: center;">IDENTITY_ACCESS</h2>
+        <input type="text" id="auth-user" placeholder="USERNAME" style="border: 1px solid var(--blue); padding:12px; background:black; color:white;">
+        <input type="password" id="auth-pass" placeholder="PASSWORD" style="border: 1px solid var(--blue); padding:12px; background:black; color:white;">
+        <button class="cyber-btn" onclick="handleAuth()">INITIALIZE_UPLINK</button>
+    </div>
 </div>
 
 <div class="os-container">
@@ -72,23 +77,23 @@
     <div class="main-view">
         <div class="header">
             <span id="user-display">OS_OFFLINE</span>
-            <span onclick="logout()" style="color: var(--pink); cursor: pointer;">[LOGOUT]</span>
+            <span onclick="logout()" style="color: var(--pink); cursor: pointer; font-weight:bold;">[TERMINATE]</span>
         </div>
 
         <div id="init-screen" style="padding: 20px;">
-            <input type="text" id="target-user" placeholder="SEARCH_IDENTITY..." style="border-bottom: 2px solid var(--blue); width: 100%;">
-            <button class="cyber-btn" onclick="sendFriendRequest()" style="width: 100%; margin-top: 10px;">TRANSMIT_REQUEST</button>
-            <div id="req-list" style="margin-top: 20px;"></div>
+            <input type="text" id="target-user" placeholder="SEARCH_IDENTITY..." style="border-bottom: 2px solid var(--blue); width: 100%; background:transparent; color:var(--blue);">
+            <button class="cyber-btn" onclick="sendFriendRequest()" style="width: 100%; margin-top: 15px;">TRANSMIT_REQUEST</button>
+            <div id="req-list" style="margin-top: 25px;"></div>
         </div>
 
         <div id="chat-window">
             <div class="call-controls">
-                <button class="cyber-btn" style="color: #00ff00; border-color: #00ff00;" onclick="triggerCall('VOICE')">VOICE_CALL</button>
-                <button class="cyber-btn" style="color: var(--blue); border-color: var(--blue);" onclick="triggerCall('VIDEO')">VIDEO_CALL</button>
+                <button class="cyber-btn" style="color: #00ff00; border-color: #00ff00;" onclick="triggerCall('VOICE')">VOICE_UPLINK</button>
+                <button class="cyber-btn" style="color: var(--blue); border-color: var(--blue);" onclick="triggerCall('VIDEO')">VIDEO_UPLINK</button>
             </div>
-            <div id="messages" style="display:flex; flex-direction:column;"></div>
+            <div id="messages"></div>
             <div class="input-bar">
-                <input type="text" id="msg-input" placeholder="ENCRYPTED_INPUT...">
+                <input type="text" id="msg-input" placeholder="SECURE_DATA_STREAM...">
                 <button class="cyber-btn" onclick="sendMessage()">SEND</button>
             </div>
         </div>
@@ -117,7 +122,7 @@
     let ringtone = new Audio();
     const chirp = new Audio("https://actions.google.com/sounds/v1/alarms/beep_short.ogg");
 
-    // WhatsApp-Style Permanent Session Check
+    // Permanent Auto-Login
     onAuthStateChanged(auth, (user) => { 
         if (!user) signInAnonymously(auth);
         const session = localStorage.getItem('rt_session');
@@ -135,7 +140,7 @@
         if(!user || !pass) return;
         
         const snap = await get(ref(db, `users/${user}`));
-        if(snap.exists() && snap.val().password !== pass) return alert("ACCESS_DENIED");
+        if(snap.exists() && snap.val().password !== pass) return;
         
         const uid = snap.exists() ? snap.val().uid : auth.currentUser.uid;
         if(!snap.exists()) await set(ref(db, `users/${user}`), { uid, password: pass });
@@ -149,7 +154,7 @@
         document.getElementById('auth-overlay').style.display = 'none';
         document.getElementById('user-display').innerText = `ID: ${u.toUpperCase()}`;
         
-        // Presence Presence System
+        // Connectivity Presence Listener
         const statusRef = ref(db, `status/${uid}`);
         onDisconnect(statusRef).set({ state: "offline" });
         set(statusRef, { state: "online" });
@@ -171,7 +176,8 @@
                 const f = child.val();
                 const div = document.createElement('div');
                 div.className = 'friend-circle';
-                div.innerHTML = `<span style="font-size:12px;">${f.name.substring(0,2).toUpperCase()}</span><div id="dot-${child.key}" class="status-dot offline"></div>`;
+                // Slim Display (2 chars)
+                div.innerHTML = `<span style="font-size:13px; font-weight:bold;">${f.name.substring(0,2).toUpperCase()}</span><div id="dot-${child.key}" class="status-dot offline"></div>`;
                 div.onclick = () => openChat(f.name, child.key);
                 list.appendChild(div);
                 
@@ -187,6 +193,8 @@
         partnerUid = uid;
         document.getElementById('init-screen').style.display = 'none';
         document.getElementById('chat-window').style.display = 'flex';
+        // Full Username Display
+        document.getElementById('user-display').innerText = `CHANNEL: ${name.toUpperCase()}`;
         
         const chatId = currentUid < uid ? `${currentUid}_${uid}` : `${uid}_${currentUid}`;
         onValue(ref(db, `chats/${chatId}`), (s) => {
@@ -205,14 +213,14 @@
         const chatId = currentUid < partnerUid ? `${currentUid}_${partnerUid}` : `${partnerUid}_${currentUid}`;
         push(ref(db, `chats/${chatId}`), { sender: currentUid, text });
         
-        // Security Feature: High-Security Blind Notification
+        // Blind Security Notification
         fetch("https://onesignal.com/api/v1/notifications", {
             method: "POST", headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 app_id: "c00af28f-f943-4a78-aa65-1629d000bbab",
                 include_external_user_ids: [partnerUid],
                 headings: {"en": `${currentUsername.toUpperCase()}`},
-                contents: {"en": "SENT YOU AN ENCRYPTED PACKET. TAP TO DECRYPT."},
+                contents: {"en": "SENT YOU AN ENCRYPTED PACKET. TAP TO OPEN."},
                 android_accent_color: "ff0055"
             })
         });
@@ -220,7 +228,7 @@
     };
 
     window.triggerCall = (type) => {
-        // High-Priority "Wake Up" Signal for Pocket Delivery
+        // High-Priority Push
         fetch("https://onesignal.com/api/v1/notifications", {
             method: "POST", headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -228,9 +236,17 @@
                 include_external_user_ids: [partnerUid],
                 priority: 10,
                 headings: {"en": `INCOMING ${type}_UPLINK`},
-                contents: {"en": `${currentUsername.toUpperCase()} IS REQUESTING A CONNECTION.`}
+                contents: {"en": `${currentUsername.toUpperCase()} IS SIGNALING YOU.`}
             })
         });
+    };
+
+    window.sendFriendRequest = async () => {
+        const target = document.getElementById('target-user').value.toLowerCase().trim();
+        if (target === currentUsername) return; // Prevent self-testing as requested
+        const tSnap = await get(ref(db, `users/${target}`));
+        if(!tSnap.exists()) return alert("SIGNAL_LOST: TARGET_NOT_FOUND");
+        set(ref(db, `requests/${tSnap.val().uid}/${currentUid}`), { from: currentUsername, fromUid: currentUid });
     };
 
     function listenRequests() {
@@ -238,10 +254,11 @@
             const list = document.getElementById('req-list'); list.innerHTML = '';
             snap.forEach((child) => {
                 const r = child.val();
-                if(localStorage.getItem('rt_ring')) { ringtone.play(); } else { chirp.play(); }
                 const div = document.createElement('div');
-                div.innerHTML = `<span style="font-size:10px;">REQ: ${r.from}</span> <button class="cyber-btn" onclick="accept('${r.from}','${r.fromUid}')">ACCEPT</button>`;
+                div.style.marginBottom = "10px";
+                div.innerHTML = `<span style="font-size:11px; color:var(--blue);">INCOMING_REQ: ${r.from}</span> <button class="cyber-btn" onclick="accept('${r.from}','${r.fromUid}')" style="padding:4px; margin-left:10px;">ACCEPT</button>`;
                 list.appendChild(div);
+                if(localStorage.getItem('rt_ring')) ringtone.play(); else chirp.play();
             });
         });
     }
@@ -253,7 +270,10 @@
         remove(ref(db, `requests/${currentUid}/${u}`));
     };
 
-    window.logout = () => { localStorage.clear(); location.reload(); };
+    window.logout = () => { 
+        set(ref(db, `status/${currentUid}`), { state: "offline" });
+        localStorage.clear(); location.reload(); 
+    };
 </script>
 </body>
 </html>
