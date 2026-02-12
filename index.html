@@ -9,47 +9,58 @@
     <script>
       window.OneSignal = window.OneSignal || [];
       OneSignal.push(function() {
-        OneSignal.init({ 
-            appId: "c00af28f-f943-4a78-aa65-1629d000bbab", 
-            allowLocalhostAsSecureOrigin: true 
-        });
+        OneSignal.init({ appId: "c00af28f-f943-4a78-aa65-1629d000bbab", allowLocalhostAsSecureOrigin: true });
       });
     </script>
 
     <style>
-        :root { --neon-pink: #ff0055; --cyber-blue: #00f2ff; --dark-bg: #050505; }
-        body { background: var(--dark-bg); color: white; font-family: 'Courier New', monospace; margin: 0; overflow: hidden; text-transform: uppercase; }
+        :root { --pink: #ff0055; --blue: #00f2ff; --bg: #050505; --glow: 0 0 15px var(--pink); }
         
-        /* CRT Scanline Overlay */
-        .scanlines { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06)); background-size: 100% 4px, 3px 100%; pointer-events: none; z-index: 100; opacity: 0.3; }
+        body { 
+            background: black url('https://wallpaperaccess.com/full/1324706.jpg') no-repeat center center fixed; 
+            background-size: cover; color: white; font-family: 'Courier New', monospace; margin: 0; overflow: hidden; 
+        }
+        
+        /* CRT Scanline & Glitch Vibe */
+        .scanlines { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%); background-size: 100% 4px; pointer-events: none; z-index: 100; opacity: 0.3; }
 
-        .os-container { height: 100vh; display: flex; flex-direction: column; border: 4px solid var(--neon-pink); box-sizing: border-box; box-shadow: 0 0 20px rgba(255, 0, 85, 0.3); animation: pulse 4s infinite alternate; }
-        @keyframes pulse { from { box-shadow: 0 0 10px var(--neon-pink); } to { box-shadow: 0 0 20px var(--cyber-blue); border-color: var(--cyber-blue); } }
+        .os-container { 
+            height: 100vh; display: grid; grid-template-columns: 220px 1fr; border: 4px solid var(--pink); 
+            box-sizing: border-box; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px);
+            animation: borderPulse 4s infinite alternate;
+        }
+        @keyframes borderPulse { from { border-color: var(--pink); } to { border-color: var(--blue); } }
+        
+        /* Sidebar */
+        .sidebar { border-right: 2px solid var(--pink); display: flex; flex-direction: column; padding: 15px; background: rgba(255, 0, 85, 0.05); }
+        .sidebar h3 { font-size: 11px; color: var(--blue); border-bottom: 1px solid var(--blue); padding-bottom: 10px; letter-spacing: 2px; }
+        .friend-item { display: flex; align-items: center; padding: 12px; border: 1px solid transparent; cursor: pointer; transition: 0.3s; margin-bottom: 8px; font-size: 13px; background: rgba(0,0,0,0.5); }
+        .friend-item:hover { border-color: var(--blue); box-shadow: 0 0 10px var(--blue); transform: scale(1.02); }
+        
+        /* Status Dots */
+        .status-dot { width: 10px; height: 10px; border-radius: 50%; margin-right: 12px; }
+        .online { background: #00ff00; box-shadow: 0 0 8px #00ff00; }
+        .offline { background: #ff0000; box-shadow: 0 0 8px #ff0000; }
 
-        /* Identity Access Overlay */
-        #auth-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--dark-bg); z-index: 200; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; border: 4px solid var(--cyber-blue); }
-        
-        .header { padding: 10px; border-bottom: 2px solid var(--neon-pink); display: flex; justify-content: space-between; font-size: 12px; background: rgba(255, 0, 85, 0.1); }
-        #video-feed { width: 100%; height: 25vh; background: #000; object-fit: cover; border-bottom: 2px solid var(--cyber-blue); filter: contrast(1.2) brightness(1.1); }
-        
-        .main-ui { flex: 1; padding: 15px; overflow-y: auto; display: none; flex-direction: column; gap: 10px; }
-        
-        input { background: rgba(0,0,0,0.8); border: 1px solid var(--cyber-blue); color: var(--cyber-blue); padding: 12px; outline: none; width: 100%; box-sizing: border-box; margin-bottom: 8px; font-family: 'Courier New', monospace; font-size: 14px; }
-        button { background: transparent; color: var(--neon-pink); border: 2px solid var(--neon-pink); padding: 12px; font-weight: 900; cursor: pointer; transition: 0.3s; box-shadow: 0 0 10px var(--neon-pink); width: 100%; font-family: 'Courier New', monospace; text-transform: uppercase; }
-        button:hover { background: var(--neon-pink); color: black; box-shadow: 0 0 30px var(--neon-pink); }
-        
-        /* Connections & Chat */
-        #friends-list { display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px; }
-        .friend-btn { border-color: var(--cyber-blue); color: var(--cyber-blue); box-shadow: 0 0 5px var(--cyber-blue); font-size: 10px; padding: 8px; }
-        
-        #chat-section { background: #000; border: 2px solid var(--cyber-blue); height: 35vh; display: none; flex-direction: column; margin-top: 5px; box-shadow: 0 0 15px rgba(0, 242, 255, 0.2); }
-        #messages { flex: 1; overflow-y: auto; padding: 10px; font-size: 11px; }
-        .msg { margin-bottom: 6px; border-left: 2px solid; padding-left: 8px; animation: fadeIn 0.3s; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        .msg.me { border-color: var(--cyber-blue); color: var(--cyber-blue); }
-        .msg.them { border-color: var(--neon-pink); color: var(--neon-pink); }
+        /* Auth & Header */
+        #auth-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 200; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+        .header { grid-column: 1 / span 2; padding: 12px; border-bottom: 2px solid var(--pink); display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.9); }
+        .logout-btn { color: var(--pink); border: 1px solid var(--pink); padding: 5px 12px; font-size: 11px; cursor: pointer; font-weight: bold; }
 
-        .request-item { background: rgba(0, 242, 255, 0.1); border: 1px solid var(--cyber-blue); padding: 8px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center; font-size: 10px; border-radius: 2px; }
+        /* Main UI & Controls */
+        .main-content { display: flex; flex-direction: column; overflow-y: auto; padding: 20px; gap: 15px; }
+        video { width: 100%; height: 28vh; background: #000; border: 2px solid var(--blue); object-fit: cover; box-shadow: 0 0 15px rgba(0, 242, 255, 0.2); }
+        input { background: rgba(0,0,0,0.8); border: 1px solid var(--blue); color: var(--blue); padding: 14px; outline: none; font-family: 'Courier New'; font-size: 14px; }
+        
+        .cyber-btn { background: transparent; color: var(--pink); border: 2px solid var(--pink); padding: 14px; font-weight: bold; cursor: pointer; box-shadow: var(--glow); text-transform: uppercase; transition: 0.2s; position: relative; overflow: hidden; }
+        .cyber-btn:hover { background: var(--pink); color: black; box-shadow: 0 0 30px var(--pink); }
+        .ringtone-btn { color: var(--blue); border-color: var(--blue); box-shadow: 0 0 10px var(--blue); font-size: 11px; margin-top: 5px; }
+
+        #chat-window { display: none; flex-direction: column; border: 2px solid var(--blue); height: 35vh; background: rgba(0,0,0,0.9); }
+        #messages { flex: 1; overflow-y: auto; padding: 12px; font-size: 12px; }
+        .msg { margin-bottom: 8px; border-left: 2px solid; padding-left: 8px; }
+        .msg.me { border-color: var(--blue); color: var(--blue); }
+        .msg.them { border-color: var(--pink); color: var(--pink); }
     </style>
 </head>
 <body>
@@ -57,40 +68,47 @@
 <div class="scanlines"></div>
 
 <div id="auth-overlay">
-    <h2 style="color: var(--neon-pink); text-shadow: 0 0 15px var(--neon-pink); letter-spacing: 3px;">IDENTITY_ACCESS</h2>
-    <input type="text" id="auth-user" placeholder="SELECT_USERNAME">
-    <input type="password" id="auth-pass" placeholder="SECURITY_KEY">
-    <button onclick="handleAuth()">SIGN_IN // INITIALIZE</button>
-    <p id="auth-status" style="font-size: 10px; color: var(--cyber-blue); margin-top: 15px; font-weight: bold;"></p>
+    <h1 style="color: var(--pink); text-shadow: 0 0 15px var(--pink); letter-spacing: 5px;">IDENTITY_ACCESS</h1>
+    <input type="text" id="auth-user" placeholder="ENTER_USERNAME">
+    <input type="password" id="auth-pass" placeholder="SECURITY_PHRASE">
+    <button class="cyber-btn" onclick="handleAuth()">INITIALIZE_SYSTEM</button>
 </div>
 
 <div class="os-container">
     <div class="header">
-        <span style="letter-spacing: 2px;">RADIOTALKER // v1.0</span>
-        <span id="user-display" style="color: var(--cyber-blue); text-shadow: 0 0 5px var(--cyber-blue);">OFFLINE</span>
+        <span style="color: var(--blue); letter-spacing: 2px;">RADIOTALKER // CYBER_OS</span>
+        <div>
+            <span id="user-display" style="margin-right:20px; font-size:12px; color: var(--blue);">STATUS: OFFLINE</span>
+            <span class="logout-btn" onclick="logout()">TERMINATE_SESSION</span>
+        </div>
     </div>
 
-    <video id="video-feed" autoplay muted playsinline></video>
-
-    <div class="main-ui" id="main-interface">
-        <input type="text" id="target-user" placeholder="ENTER_TARGET_USERNAME">
-        <button onclick="sendFriendRequest()">TRANSMIT_ADD_SIGNAL</button>
-
-        <div id="request-list">
-            <div style="font-size: 10px; color: #666; margin: 8px 0;">INCOMING_SIGNALS:</div>
-        </div>
-
-        <div style="font-size: 10px; color: var(--cyber-blue); margin-top: 8px; border-top: 1px solid #333; padding-top: 5px;">STABILIZED_UPLINKS:</div>
+    <div class="sidebar">
+        <h3>ACTIVE_UPLINKS</h3>
         <div id="friends-list"></div>
+        
+        <div style="margin-top:auto;">
+            <input type="file" id="ringtone-input" accept="audio/*" style="display:none;" onchange="saveRingtone(this)">
+            <button class="cyber-btn ringtone-btn" onclick="document.getElementById('ringtone-input').click()">PICK RINGTONE</button>
+        </div>
+    </div>
 
-        <div id="chat-section">
-            <div style="font-size: 10px; padding: 6px; border-bottom: 1px solid var(--cyber-blue); background: rgba(0, 242, 255, 0.05);">
-                UPLINK_ACTIVE: <span id="chat-partner" style="color: var(--cyber-blue);">---</span>
+    <div class="main-content" id="main-interface" style="display:none;">
+        <video id="video-feed" autoplay muted playsinline></video>
+        
+        <input type="text" id="target-user" placeholder="TARGET_USERNAME">
+        <button class="cyber-btn" onclick="sendFriendRequest()">TRANSMIT_ADD_SIGNAL</button>
+
+        <div id="request-list"></div>
+
+        <div id="chat-window">
+            <div style="font-size: 11px; padding: 8px; border-bottom: 1px solid var(--blue); background: rgba(0, 242, 255, 0.1);">
+                CONNECTED_CHANNEL: <span id="partner-name">---</span>
             </div>
             <div id="messages"></div>
-            <div style="display:flex; border-top:1px solid var(--cyber-blue);">
-                <input type="text" id="msg-input" placeholder="TYPE_MESSAGE..." style="margin:0; border:none; font-size: 11px; flex: 1;">
-                <button onclick="sendMessage()" style="border:none; padding:10px; width:85px; box-shadow:none; font-size: 11px;">SEND</button>
+            <div style="display:flex; border-top:1px solid var(--blue);">
+                <input type="text" id="msg-input" placeholder="ENCRYPTED_MESSAGE..." style="margin:0; border:none; flex:1;">
+                <button onclick="sendMessage()" style="border:none; width:90px; color: var(--blue); background: rgba(0, 242, 255, 0.1);">SEND</button>
             </div>
         </div>
     </div>
@@ -98,16 +116,14 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getDatabase, ref, get, set, push, onValue, remove, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    import { getDatabase, ref, get, set, push, onValue, remove, onDisconnect, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
     import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-    // Your verified Firebase Config
     const firebaseConfig = {
         apiKey: "AIzaSyD2WRzWp0pl2niRizDPF_kqUrHB4_gY8gA",
         authDomain: "radio-c49c0.firebaseapp.com",
         databaseURL: "https://radio-c49c0-default-rtdb.firebaseio.com",
         projectId: "radio-c49c0",
-        storageBucket: "radio-c49c0.firebasestorage.app",
         messagingSenderId: "231017755170",
         appId: "1:231017755170:web:02df1616290fe2edcdd07b"
     };
@@ -116,145 +132,146 @@
     const db = getDatabase(app);
     const auth = getAuth(app);
 
-    let currentUid = "";
-    let currentUsername = "";
-    let partnerUid = "";
+    let currentUid = "", currentUsername = "", partnerUid = "";
+    let ringtone = new Audio();
 
-    // Automatic Anonymous Login for unique ID persistence
     onAuthStateChanged(auth, (user) => { if (!user) signInAnonymously(auth); });
 
-    // 1. AUTH SYSTEM
+    // 1. AUTO-LOGIN
+    window.onload = () => {
+        const u = localStorage.getItem('rt_user'), p = localStorage.getItem('rt_pass');
+        const r = localStorage.getItem('rt_ring');
+        if (r) ringtone.src = r;
+        if (u && p) { document.getElementById('auth-user').value = u; document.getElementById('auth-pass').value = p; handleAuth(); }
+    };
+
     window.handleAuth = async () => {
         const user = document.getElementById('auth-user').value.toLowerCase().trim();
         const pass = document.getElementById('auth-pass').value.trim();
-        const status = document.getElementById('auth-status');
-
-        if (!user || !pass) return status.innerText = "> ERROR: INCOMPLETE_DATA";
-        status.innerText = "> SCANNING_IDENTITY...";
-        
         const userRef = ref(db, `users/${user}`);
-        const snapshot = await get(userRef);
+        const snap = await get(userRef);
 
-        if (snapshot.exists()) {
-            if (snapshot.val().password === pass) {
-                login(user, snapshot.val().uid);
-            } else {
-                status.innerText = "> ERROR: USERNAME_TAKEN_OR_PASS_WRONG";
-            }
-        } else {
-            const newUid = auth.currentUser.uid;
-            await set(userRef, { uid: newUid, password: pass });
-            await set(ref(db, `uids/${newUid}`), { username: user });
-            login(user, newUid);
-        }
+        if (snap.exists() && snap.val().password !== pass) return alert("SIGNAL_REJECTED: AUTH_FAILED");
+        
+        const uid = snap.exists() ? snap.val().uid : auth.currentUser.uid;
+        if (!snap.exists()) await set(userRef, { uid, password: pass });
+        
+        localStorage.setItem('rt_user', user); localStorage.setItem('rt_pass', pass);
+        login(user, uid);
     };
 
     function login(username, uid) {
-        currentUsername = username;
-        currentUid = uid;
+        currentUsername = username; currentUid = uid;
         document.getElementById('auth-overlay').style.display = 'none';
         document.getElementById('main-interface').style.display = 'flex';
-        document.getElementById('user-display').innerText = `ID: ${username.toUpperCase()}`;
+        document.getElementById('user-display').innerText = `USER: ${username.toUpperCase()}`;
         
-        listenForRequests();
-        listenForFriends(); 
+        // Presence Tracker
+        const statusRef = ref(db, `status/${uid}`);
+        onDisconnect(statusRef).set({ state: "offline", last: serverTimestamp() });
+        set(statusRef, { state: "online", last: serverTimestamp() });
+
+        listenForRequests(); listenForFriends();
         window.OneSignal.push(() => OneSignal.setExternalUserId(uid));
     }
 
-    // 2. FRIEND REQUESTS
-    window.sendFriendRequest = async () => {
-        const target = document.getElementById('target-user').value.toLowerCase().trim();
-        if (target === currentUsername) return alert("SELF_CONNECTION_BLOCKED");
-        
-        const targetSnap = await get(ref(db, `users/${target}`));
-        if(!targetSnap.exists()) return alert("TARGET_NOT_FOUND");
-        
-        const targetUid = targetSnap.val().uid;
-        set(ref(db, `requests/${targetUid}/${currentUid}`), { from: currentUsername, fromUid: currentUid });
-        
-        // Pocket Notification
-        fetch("https://onesignal.com/api/v1/notifications", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                app_id: "c00af28f-f943-4a78-aa65-1629d000bbab", 
-                include_external_user_ids: [targetUid],
-                headings: {"en": "INCOMING_SIGNAL"},
-                contents: {"en": `${currentUsername} is requesting uplink.`}
-            })
-        });
-        alert("SIGNAL_TRANSMITTED");
+    // 2. RINGTONE LOGIC
+    window.saveRingtone = (input) => {
+        const file = input.files[0];
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            localStorage.setItem('rt_ring', e.target.result);
+            ringtone.src = e.target.result;
+            alert("RINGTONE_SYNCED");
+        };
+        reader.readAsDataURL(file);
     };
 
-    function listenForRequests() {
-        onValue(ref(db, `requests/${currentUid}`), (snapshot) => {
-            const list = document.getElementById('request-list');
-            list.innerHTML = '<div style="font-size: 10px; color: #666; margin: 8px 0;">INCOMING_SIGNALS:</div>';
+    // 3. PERSISTENT FRIENDS & STATUS
+    window.sendFriendRequest = async () => {
+        const target = document.getElementById('target-user').value.toLowerCase().trim();
+        const tSnap = await get(ref(db, `users/${target}`));
+        if(!tSnap.exists()) return alert("SIGNAL_LOST: TARGET_NOT_FOUND");
+        set(ref(db, `requests/${tSnap.val().uid}/${currentUid}`), { from: currentUsername, fromUid: currentUid });
+    };
+
+    function listenForFriends() {
+        onValue(ref(db, `friends/${currentUid}`), (snapshot) => {
+            const list = document.getElementById('friends-list'); list.innerHTML = '';
             snapshot.forEach((child) => {
-                const req = child.val();
-                const div = document.createElement('div');
-                div.className = 'request-item';
-                div.innerHTML = `<span>USER: ${req.from}</span> <button style="width:auto; padding:5px 12px; font-size:9px;" onclick="accept('${req.from}', '${req.fromUid}')">ACCEPT</button>`;
+                const f = child.val();
+                const item = document.createElement('div');
+                item.className = 'friend-item';
+                item.innerHTML = `<div id="dot-${child.key}" class="status-dot offline"></div> <span>${f.name}</span>`;
+                item.onclick = () => openChat(f.name, child.key);
+                list.appendChild(item);
+                
+                onValue(ref(db, `status/${child.key}`), (s) => {
+                    const dot = document.getElementById(`dot-${child.key}`);
+                    if(dot) dot.className = `status-dot ${s.val()?.state === 'online' ? 'online' : 'offline'}`;
+                });
+            });
+        });
+    }
+
+    window.accept = async (name, uid) => {
+        await set(ref(db, `friends/${currentUid}/${uid}`), { name });
+        await set(ref(db, `friends/${uid}/${currentUid}`), { name: currentUsername });
+        remove(ref(db, `requests/${currentUid}/${uid}`));
+    };
+
+    // 4. CHAT & CALL PUSH
+    function openChat(name, uid) {
+        partnerUid = uid; document.getElementById('chat-window').style.display = 'flex';
+        document.getElementById('partner-name').innerText = name.toUpperCase();
+        
+        // Ring via OneSignal
+        fetch("https://onesignal.com/api/v1/notifications", {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                app_id: "c00af28f-f943-4a78-aa65-1629d000bbab",
+                include_external_user_ids: [uid],
+                priority: 10,
+                headings: {"en": "INCOMING UPLINK"},
+                contents: {"en": `${currentUsername} is calling you...`},
+                android_accent_color: "ff0055"
+            })
+        });
+
+        const chatId = currentUid < uid ? `${currentUid}_${uid}` : `${uid}_${currentUid}`;
+        onValue(ref(db, `chats/${chatId}`), (s) => {
+            const box = document.getElementById('messages'); box.innerHTML = '';
+            s.forEach((m) => {
+                const d = document.createElement('div');
+                d.className = m.val().sender === currentUid ? 'msg me' : 'msg them';
+                d.innerText = `> ${m.val().text}`; box.appendChild(d);
+            });
+            box.scrollTop = box.scrollHeight;
+        });
+    }
+
+    window.sendMessage = () => {
+        const text = document.getElementById('msg-input').value; if(!text || !partnerUid) return;
+        const chatId = currentUid < partnerUid ? `${currentUid}_${partnerUid}` : `${partnerUid}_${currentUid}`;
+        push(ref(db, `chats/${chatId}`), { sender: currentUid, text, time: serverTimestamp() });
+        document.getElementById('msg-input').value = '';
+    };
+
+    window.listenForRequests = () => {
+        onValue(ref(db, `requests/${currentUid}`), (snapshot) => {
+            const list = document.getElementById('request-list'); list.innerHTML = '';
+            snapshot.forEach((child) => {
+                const r = child.val();
+                if(ringtone.src) ringtone.play(); // Play custom ringtone on request
+                const div = document.createElement('div'); div.style.fontSize='11px'; div.style.color='var(--blue)';
+                div.innerHTML = `REQ: ${r.from} <button onclick="accept('${r.from}','${r.fromUid}')" style="padding:2px; font-size:9px;">ACCEPT</button>`;
                 list.appendChild(div);
             });
         });
     }
 
-    // 3. MULTI-USER FRIEND LIST & PERSISTENCE
-    window.accept = async (name, uid) => {
-        await set(ref(db, `friends/${currentUid}/${uid}`), { name: name });
-        await set(ref(db, `friends/${uid}/${currentUid}`), { name: currentUsername });
-        remove(ref(db, `requests/${currentUid}/${uid}`));
-    };
+    window.logout = () => { set(ref(db, `status/${currentUid}`), { state: "offline" }); localStorage.clear(); location.reload(); };
 
-    function listenForFriends() {
-        onValue(ref(db, `friends/${currentUid}`), (snapshot) => {
-            const list = document.getElementById('friends-list');
-            list.innerHTML = '';
-            snapshot.forEach((child) => {
-                const f = child.val();
-                const btn = document.createElement('button');
-                btn.className = 'friend-btn';
-                btn.innerText = `CONNECT_TO: ${f.name.toUpperCase()}`;
-                btn.onclick = () => switchToChat(f.name, child.key);
-                list.appendChild(btn);
-            });
-        });
-    }
-
-    // 4. PRIVATE CHAT LOGIC
-    function switchToChat(name, uid) {
-        partnerUid = uid;
-        document.getElementById('chat-section').style.display = 'flex';
-        document.getElementById('chat-partner').innerText = name.toUpperCase();
-        startChat(uid);
-    }
-
-    function startChat(id) {
-        const chatId = currentUid < id ? `${currentUid}_${id}` : `${id}_${currentUid}`;
-        onValue(ref(db, `chats/${chatId}`), (snapshot) => {
-            const msgBox = document.getElementById('messages');
-            msgBox.innerHTML = '';
-            snapshot.forEach((child) => {
-                const m = child.val();
-                const div = document.createElement('div');
-                div.className = m.sender === currentUid ? 'msg me' : 'msg them';
-                div.innerText = `> ${m.text}`;
-                msgBox.appendChild(div);
-            });
-            msgBox.scrollTop = msgBox.scrollHeight;
-        });
-    }
-
-    window.sendMessage = () => {
-        const text = document.getElementById('msg-input').value;
-        if(!text || !partnerUid) return;
-        const chatId = currentUid < partnerUid ? `${currentUid}_${partnerUid}` : `${partnerUid}_${currentUid}`;
-        push(ref(db, `chats/${chatId}`), { sender: currentUid, text: text, time: serverTimestamp() });
-        document.getElementById('msg-input').value = '';
-    };
-
-    // Camera Feed
     navigator.mediaDevices.getUserMedia({ video: true }).then(s => document.getElementById('video-feed').srcObject = s);
 </script>
 
