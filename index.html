@@ -23,11 +23,11 @@
 
         .os-container { height: 100vh; display: grid; grid-template-columns: 75px 1fr; border: 4px solid var(--pink); box-sizing: border-box; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); position: relative; }
         .sidebar { border-right: 2px solid var(--pink); display: flex; flex-direction: column; padding: 5px; height: 100%; background: rgba(0,0,0,0.9); }
-        
+        .friend-circle { width: 48px; height: 48px; border: 2px solid var(--blue); border-radius: 50%; margin: 12px auto; display: flex; align-items: center; justify-content: center; position: relative; cursor: pointer; background: black; }
+
         #chat-window { flex: 1; display: none; flex-direction: column; height: 100%; position: relative; }
         #messages { flex: 1; overflow-y: auto; padding: 15px; font-size: 14px; display: flex; flex-direction: column; padding-bottom: 100px; }
         
-        /* WhatsApp-Style Input with [+] Button */
         .input-dock { position: absolute; bottom: 0; left: 0; width: 100%; display: flex; align-items: center; border-top: 2px solid var(--blue); background: black; padding: 10px; box-sizing: border-box; }
         .plus-btn { color: var(--blue); border: 2px solid var(--blue); border-radius: 50%; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 20px; margin-right: 10px; }
         input { background: transparent; border: none; color: var(--blue); padding: 12px; flex: 1; outline: none; font-size: 16px; font-family: 'Courier New'; }
@@ -36,19 +36,20 @@
         .msg { margin-bottom: 10px; padding: 12px; border-radius: 5px; max-width: 80%; border: 1px solid transparent; word-wrap: break-word; }
         .msg.me { align-self: flex-end; border-color: var(--blue); color: var(--blue); }
         .msg.them { align-self: flex-start; border-color: var(--pink); color: var(--pink); }
-        .media-link { color: #00ff00; text-decoration: underline; font-size: 12px; display: block; margin-top: 5px; }
     </style>
 </head>
 <body>
 
 <div id="glitch-overlay">UPLINK_TERMINATED</div>
+
 <div id="call-screen">
-    <div style="font-size: 10px; color: var(--blue); letter-spacing: 2px;">SECURE_VOICE_UPLINK</div>
+    <div style="font-size: 10px; color: var(--blue);">SECURE_VOICE_UPLINK</div>
     <h2 id="caller-display" style="color: white; margin-top: 20px; letter-spacing: 5px;">---</h2>
-    <div id="call-timer" class="timer">00:00</div>
+    <div id="call-timer" class="timer">SIGNALING...</div>
     <div style="display:flex; flex-direction:column; gap:20px;">
-        <button id="ans-btn" class="cyber-btn" style="color:#00ff00; border-color:#00ff00; width:220px;" onclick="acceptAudioUplink()">ACCEPT_LINK</button>
-        <button class="cyber-btn" style="color:#ff0000; border-color:#ff0000; width:220px;" onclick="terminateAudioUplink()">TERMINATE</button>
+        <button id="mic-init-btn" class="cyber-btn" style="color:#00f2ff; border-color:#00f2ff; width:220px;" onclick="initializeHardware()">INITIALIZE_HARDWARE</button>
+        <button id="ans-btn" class="cyber-btn" style="color:#00ff00; border-color:#00ff00; width:220px; display:none;" onclick="acceptUplink()">ACCEPT_LINK</button>
+        <button class="cyber-btn" style="color:#ff0000; border-color:#ff0000; width:220px;" onclick="terminateUplink()">TERMINATE</button>
     </div>
 </div>
 
@@ -66,7 +67,7 @@
         </div>
         <div id="chat-window">
             <div style="display:flex; justify-content: space-around; padding:12px; border-bottom:1px solid var(--blue); background:rgba(0,242,255,0.05);">
-                <button class="cyber-btn" style="color:#00ff00; border-color:#00ff00;" onclick="initiateCall('VOICE')">VOICE</button>
+                <button class="cyber-btn" onclick="startCall('VOICE')">VOICE</button>
                 <button class="cyber-btn" style="color:#ffff00; border-color:#ffff00;" onclick="triggerDestruct()">DESTROY</button>
                 <button class="cyber-btn" onclick="exitChat()">EXIT</button>
             </div>
@@ -103,11 +104,18 @@
     let ringtone = new Audio();
     const chirp = new Audio("https://actions.google.com/sounds/v1/alarms/beep_short.ogg");
 
+    // Dynamic Dock Alignment
+    if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', () => {
+            const dock = document.getElementById('bottom-dock');
+            dock.style.bottom = `${window.innerHeight - window.visualViewport.height}px`;
+        });
+    }
+
     onAuthStateChanged(auth, async (user) => { 
         if (!user) await signInAnonymously(auth);
         const saved = localStorage.getItem('rt_session');
         if (saved) { login(JSON.parse(saved).u, JSON.parse(saved).uid); }
-        else { document.getElementById('init-screen').style.display = 'block'; }
     });
 
     function login(u, uid) {
@@ -119,78 +127,72 @@
         window.OneSignal.push(() => OneSignal.setExternalUserId(uid));
     }
 
-    // 1. DUAL-SIDE VOICE LOGIC
+    // 1. HARDWARE SYNC & VOICE
+    window.initializeHardware = async () => {
+        try {
+            await navigator.mediaDevices.getUserMedia({ audio: true });
+            document.getElementById('mic-init-btn').style.display = 'none';
+            document.getElementById('ans-btn').style.display = 'block';
+            document.getElementById('call-timer').innerText = "HARDWARE_ACTIVE";
+        } catch(e) { alert("MICROPHONE_ACCESS_REQUIRED"); }
+    };
+
     function listenSignals() {
         onValue(ref(db, `signals/${currentUid}`), (snap) => {
             if (snap.exists()) {
                 const signal = snap.val();
-                // A. Mutual Accepted Signal: Switches Caller side to timer UI
-                if (signal.type === 'ACCEPTED') {
-                    startUplinkTimer();
-                } 
-                // B. Incoming Call Signal: Opens Modal for Receiver
+                if (signal.type === 'ACCEPTED') { startTimer(); } 
                 else if (signal.type === 'VOICE') {
                     document.getElementById('caller-display').innerText = signal.from.toUpperCase();
                     document.getElementById('call-screen').style.display = 'flex';
-                    document.getElementById('ans-btn').style.display = 'block';
                     if(localStorage.getItem('rt_ring')) ringtone.play(); else chirp.play();
                 }
             }
         });
     }
 
-    window.initiateCall = (type) => {
+    window.startCall = (type) => {
         set(ref(db, `signals/${partnerUid}`), { from: currentUsername, fromUid: currentUid, type: type });
         document.getElementById('caller-display').innerText = `CALLING_${partnerUid.substring(0,5)}...`;
         document.getElementById('call-screen').style.display = 'flex';
-        document.getElementById('ans-btn').style.display = 'none'; // Caller waits
+        document.getElementById('mic-init-btn').style.display = 'block';
+        document.getElementById('ans-btn').style.display = 'none';
     };
 
-    window.acceptAudioUplink = async () => {
+    window.acceptUplink = async () => {
         ringtone.pause();
-        // Force Mic Permission Handshake
-        try { await navigator.mediaDevices.getUserMedia({ audio: true }); } catch(e) { alert("MIC_REQUIRED"); }
-        // Signal caller to also switch to timer UI
         await set(ref(db, `signals/${partnerUid}`), { type: 'ACCEPTED' });
-        startUplinkTimer();
+        startTimer();
     };
 
-    function startUplinkTimer() {
+    function startTimer() {
         let sec = 0;
         document.getElementById('ans-btn').style.display = 'none';
+        document.getElementById('mic-init-btn').style.display = 'none';
         callTimer = setInterval(() => {
             sec++;
-            let m = Math.floor(sec/60).toString().padStart(2,'0');
-            let s = (sec%60).toString().padStart(2,'0');
-            document.getElementById('call-timer').innerText = `${m}:${s}`;
+            document.getElementById('call-timer').innerText = `${Math.floor(sec/60).toString().padStart(2,'0')}:${(sec%60).toString().padStart(2,'0')}`;
         }, 1000);
     }
 
-    window.terminateAudioUplink = () => {
+    window.terminateUplink = () => {
         clearInterval(callTimer); ringtone.pause();
         document.getElementById('call-screen').style.display = 'none';
         remove(ref(db, `signals/${currentUid}`));
         remove(ref(db, `signals/${partnerUid}`));
     };
 
-    // 2. MEDIA TRANSMISSION [+] FEATURE
-    window.transmitMedia = async (input) => {
+    // 2. MEDIA & DESTRUCTION
+    window.transmitMedia = (input) => {
         const file = input.files[0]; if(!file) return;
         const reader = new FileReader();
         reader.onload = (e) => {
-            const mediaData = e.target.result;
             const chatId = currentUid < partnerUid ? `${currentUid}_${partnerUid}` : `${partnerUid}_${currentUid}`;
-            push(ref(db, `chats/${chatId}`), { 
-                sender: currentUid, 
-                text: `[MEDIA_PACKET]: ${file.name}`, 
-                file: mediaData,
-                fileName: file.name 
-            });
+            push(ref(db, `chats/${chatId}`), { sender: currentUid, text: `[FILE]: ${file.name}`, file: e.target.result, fileName: file.name });
         };
         reader.readAsDataURL(file);
     };
 
-    // 3. MUTUAL DESTRUCTION
     window.triggerDestruct = async () => {
         const chatId = currentUid < partnerUid ? `${currentUid}_${partnerUid}` : `${partnerUid}_${currentUid}`;
         document.getElementById('messages').innerHTML = "";
@@ -208,7 +210,7 @@
         });
     }
 
-    // CORE UI
+    // CORE UI ACTIONS
     function openChat(name, uid) {
         partnerUid = uid; document.getElementById('init-screen').style.display = 'none'; document.getElementById('chat-window').style.display = 'flex';
         const chatId = currentUid < uid ? `${currentUid}_${uid}` : `${uid}_${currentUid}`;
@@ -220,7 +222,7 @@
                 const d = document.createElement('div');
                 d.className = data.sender === currentUid ? 'msg me' : 'msg them';
                 d.innerHTML = `> ${data.text}`;
-                if(data.file) d.innerHTML += `<a href="${data.file}" download="${data.fileName}" class="media-link">DOWNLOAD_DATA</a>`;
+                if(data.file) d.innerHTML += `<br><a href="${data.file}" download="${data.fileName}" style="color:#00ff00; font-size:10px;">DOWNLOAD_DATA</a>`;
                 box.appendChild(d);
             });
             box.scrollTop = box.scrollHeight;
