@@ -3,12 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>PRIVATE_MSG // MASTER_SYNC</title>
+    <title>PRIVATE_MSG // CORE_UPLINK</title>
     
     <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
     <script>
       window.OneSignal = window.OneSignal || [];
-      OneSignal.push(() => { OneSignal.init({ appId: "c00af28f-f943-4a78-aa65-1629d000bbab", allowLocalhostAsSecureOrigin: true }); });
+      OneSignal.push(() => { 
+          OneSignal.init({ appId: "c00af28f-f943-4a78-aa65-1629d000bbab", allowLocalhostAsSecureOrigin: true }); 
+      });
     </script>
 
     <style>
@@ -30,16 +32,14 @@
         .offline { background: red; }
 
         #chat-window { flex: 1; display: none; flex-direction: column; height: 100%; position: relative; }
-        #messages { flex: 1; overflow-y: auto; padding: 15px; font-size: 14px; display: flex; flex-direction: column; padding-bottom: 125px; }
-        .input-dock { position: absolute; bottom: 0; left: 0; width: 100%; display: flex; align-items: center; border-top: 2px solid var(--blue); background: black; padding: 12px; box-sizing: border-box; }
-        .plus-btn { color: var(--blue); border: 2px solid var(--blue); border-radius: 50%; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 20px; margin-right: 10px; font-weight: bold; }
+        #messages { flex: 1; overflow-y: auto; padding: 15px; font-size: 14px; display: flex; flex-direction: column; padding-bottom: 130px; }
+        .input-dock { position: absolute; bottom: 0; left: 0; width: 100%; display: flex; align-items: center; border-top: 2px solid var(--blue); background: black; padding: 10px; box-sizing: border-box; }
         
         .cyber-btn { background: transparent; color: var(--pink); border: 2px solid var(--pink); padding: 8px 12px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 10px; }
         .msg { margin-bottom: 12px; padding: 10px; border-radius: 8px; max-width: 80%; border: 1px solid transparent; position: relative; word-wrap: break-word; }
         .msg.me { align-self: flex-end; border-color: var(--blue); color: var(--blue); }
         .msg.them { align-self: flex-start; border-color: var(--pink); color: var(--pink); }
-        .tick { position: absolute; bottom: 2px; right: 5px; font-size: 10px; font-weight: bold; }
-        .seen { color: var(--green); }
+        .tick { position: absolute; bottom: 3px; right: 5px; font-size: 10px; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -47,10 +47,10 @@
 <div id="glitch-overlay">UPLINK_WIPED_DATA_VOID</div>
 
 <div id="auth-gate">
-    <h2 style="color: var(--pink); letter-spacing: 5px;">IDENTITY_REQUIRED</h2>
+    <h2 style="color: var(--pink); letter-spacing: 5px;">IDENTITY_ACCESS</h2>
     <input type="text" id="auth-user" placeholder="USERNAME" style="background: black; border: 1px solid var(--blue); color: white; padding: 15px; width: 250px; margin-bottom: 10px; text-transform: lowercase;">
     <input type="password" id="auth-pass" placeholder="PASSWORD" style="background: black; border: 1px solid var(--blue); color: white; padding: 15px; width: 250px; margin-bottom: 20px;">
-    <button class="cyber-btn" onclick="handleAuth()" style="width: 250px;">INITIALIZE_UPLINK</button>
+    <button class="cyber-btn" onclick="handleAuth()" style="width: 250px;">INITIALIZE_IDENTITY</button>
 </div>
 
 <div id="call-screen">
@@ -71,18 +71,18 @@
         <div id="init-screen" style="padding: 20px;">
             <div style="font-size: 10px; color: var(--pink); margin-bottom: 20px;">ACTIVE_ID: <span id="user-display">---</span></div>
             <input type="text" id="target-user" placeholder="SEARCH_ID..." style="border-bottom: 2px solid var(--blue); width: 100%; background:transparent; color:var(--blue); padding:10px;">
-            <button class="cyber-btn" onclick="sendFriendRequest()" style="width: 100%; margin-top:15px;">ADD_FRIEND</button>
+            <button class="cyber-btn" onclick="sendFriendRequest()" style="width: 100%; margin-top:15px;">SEND_REQUEST</button>
             <div id="req-list" style="margin-top: 30px;"></div>
         </div>
         <div id="chat-window">
             <div style="display:flex; justify-content: space-around; padding:12px; border-bottom:1px solid var(--blue); background:rgba(0,0,0,0.5);">
-                <button class="cyber-btn" style="color:var(--green); border-color:var(--green);" onclick="startCall('VOICE')">VOICE</button>
+                <button class="cyber-btn" style="color:var(--green); border-color:var(--green);" onclick="initiateCall()">VOICE</button>
                 <button class="cyber-btn" style="color:yellow; border-color:yellow;" onclick="mutualDestruct()">DESTROY</button>
                 <button class="cyber-btn" onclick="exitChat()">BACK</button>
             </div>
             <div id="messages"></div>
             <div class="input-dock" id="bottom-dock">
-                <div class="plus-btn" onclick="document.getElementById('file-input').click()">+</div>
+                <div style="color: var(--blue); border: 2px solid var(--blue); border-radius: 50%; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 20px; margin-right: 10px;" onclick="document.getElementById('file-input').click()">+</div>
                 <input type="file" id="file-input" hidden onchange="uploadMedia(this)">
                 <input type="text" id="msg-input" placeholder="PRIVATE_STREAM..." style="flex:1; background:transparent; border:none; color:var(--blue); outline:none;">
                 <button class="cyber-btn" onclick="sendMessage()">SEND</button>
@@ -122,6 +122,8 @@
         if (saved) { 
             const d = JSON.parse(saved); currentUid = d.uid; currentUsername = d.u;
             unlockUI();
+        } else {
+            document.getElementById('auth-gate').style.display = 'flex';
         }
     });
 
@@ -130,7 +132,7 @@
         const p = document.getElementById('auth-pass').value.trim();
         if(!u || !p) return;
         const snap = await get(ref(db, `users/${u}`));
-        if(snap.exists() && snap.val().password !== p) return alert("UNAUTHORIZED");
+        if(snap.exists() && snap.val().password !== p) return alert("BAD_KEY");
         const uid = snap.exists() ? snap.val().uid : auth.currentUser.uid;
         if(!snap.exists()) await set(ref(db, `users/${u}`), { uid, password: p });
         localStorage.setItem('rt_session', JSON.stringify({u, uid}));
@@ -143,11 +145,28 @@
         document.getElementById('user-display').innerText = currentUsername.toUpperCase();
         set(ref(db, `status/${currentUid}`), { state: "online" });
         onDisconnect(ref(db, `status/${currentUid}`)).set({ state: "offline" });
-        listenFriends(); listenSignals();
+        listenFriends(); listenRequests(); listenSignals();
         window.OneSignal.push(() => OneSignal.setExternalUserId(currentUid));
     }
 
-    // Fix: Sync Global Timer & Mutual Termination
+    // Fix: Binary Media Upload [+]
+    window.uploadMedia = (i) => {
+        const f = i.files[0]; if(!f || !partnerUid) return;
+        const r = new FileReader();
+        r.onload = (e) => {
+            const chatId = currentUid < partnerUid ? `${currentUid}_${partnerUid}` : `${partnerUid}_${currentUid}`;
+            push(ref(db, `chats/${chatId}`), { 
+                sender: currentUid, 
+                text: `[MEDIA_PACKET]: ${f.name}`, 
+                file: e.target.result, 
+                fName: f.name, 
+                seen: false 
+            });
+        };
+        r.readAsDataURL(f);
+    };
+
+    // Fix: Unified Global Timer & Signaling
     function listenSignals() {
         onValue(ref(db, `signals/${currentUid}`), (snap) => {
             if (snap.exists()) {
@@ -156,14 +175,13 @@
                 else if (s.type === 'VOICE') {
                     document.getElementById('caller-display').innerText = s.from.toUpperCase();
                     document.getElementById('call-screen').style.display = 'flex';
-                    document.getElementById('ans-btn').style.display = 'block';
                 } else if (s.type === 'ENDED') { resetCallSystem(); }
             }
         });
     }
 
-    window.startCall = (type) => {
-        set(ref(db, `signals/${partnerUid}`), { from: currentUsername, fromUid: currentUid, type: type });
+    window.initiateCall = () => {
+        set(ref(db, `signals/${partnerUid}`), { from: currentUsername, fromUid: currentUid, type: 'VOICE' });
         document.getElementById('caller-display').innerText = "SIGNALING...";
         document.getElementById('call-screen').style.display = 'flex';
         document.getElementById('ans-btn').style.display = 'none';
@@ -179,7 +197,6 @@
         document.getElementById('ans-btn').style.display = 'none';
         globalTimer = setInterval(() => {
             const diff = Math.floor((Date.now() - startTime) / 1000);
-            if (diff < 0) return;
             const m = Math.floor(diff / 60).toString().padStart(2, '0');
             const s = (diff % 60).toString().padStart(2, '0');
             document.getElementById('call-timer').innerText = `${m}:${s}`;
@@ -198,10 +215,8 @@
         document.getElementById('call-timer').innerText = "00:00";
     }
 
-    // Restore Mutual Destruction
     window.mutualDestruct = async () => {
         const chatId = currentUid < partnerUid ? `${currentUid}_${partnerUid}` : `${partnerUid}_${currentUid}`;
-        document.getElementById('messages').innerHTML = "";
         await set(ref(db, `destruct/${chatId}/${currentUid}`), true);
         onValue(ref(db, `destruct/${chatId}`), (snap) => {
             if (snap.exists() && Object.keys(snap.val()).length >= 2) {
@@ -220,8 +235,12 @@
             s.forEach((m) => {
                 const d = m.val();
                 if (d.sender !== currentUid && !d.seen) { update(ref(db, `chats/${chatId}/${m.key}`), { seen: true }); }
-                const div = document.createElement('div'); div.className = d.sender === currentUid ? 'msg me' : 'msg them';
-                div.innerHTML = `> ${d.text} ${d.file ? `<br><a href="${d.file}" download="${d.fName}" style="color:var(--green); font-size:10px;">DATA_DOWNLOAD</a>` : ''} <span class="tick ${d.seen ? 'seen' : ''}">${d.sender === currentUid ? '✓✓' : ''}</span>`;
+                const div = document.createElement('div');
+                div.className = d.sender === currentUid ? 'msg me' : 'msg them';
+                let content = `> ${d.text}`;
+                if(d.file) content += `<br><a href="${d.file}" download="${d.fName}" style="color:var(--green); font-size:10px;">DATA_DOWNLOAD</a>`;
+                content += `<span class="tick" style="color:${d.seen ? 'var(--green)' : 'var(--grey)'}">${d.sender === currentUid ? '✓✓' : ''}</span>`;
+                div.innerHTML = content;
                 box.appendChild(div);
             });
             box.scrollTop = box.scrollHeight;
@@ -234,18 +253,12 @@
         document.getElementById('msg-input').value = '';
     };
 
-    window.uploadMedia = (i) => {
-        const f = i.files[0]; if(!f) return; const r = new FileReader();
-        r.onload = (e) => { push(ref(db, `chats/${currentUid < partnerUid ? currentUid+'_'+partnerUid : partnerUid+'_'+currentUid}`), { sender: currentUid, text: `[FILE]: ${f.name}`, file: e.target.result, fName: f.name, seen: false }); };
-        r.readAsDataURL(f);
-    };
-
     window.logout = () => { localStorage.clear(); location.reload(); };
     window.exitChat = () => { document.getElementById('chat-window').style.display = 'none'; document.getElementById('init-screen').style.display = 'block'; partnerUid = ""; };
     function listenFriends() { onValue(ref(db, `friends/${currentUid}`), (snap) => { const list = document.getElementById('friends-list'); list.innerHTML = ''; snap.forEach((child) => { const f = child.val(); const div = document.createElement('div'); div.className = 'friend-circle'; div.innerHTML = `<span>${f.name.substring(0,2).toUpperCase()}</span><div id="dot-${child.key}" class="status-dot offline"></div>`; div.onclick = () => openChat(f.name, child.key); list.appendChild(div); onValue(ref(db, `status/${child.key}`), (s) => { const dot = document.getElementById(`dot-${child.key}`); if (dot) dot.className = `status-dot ${s.val()?.state === 'online' ? 'online' : 'offline'}`; }); }); }); }
-    function listenRequests() { onValue(ref(db, `requests/${currentUid}`), (snap) => { const list = document.getElementById('req-list'); list.innerHTML = ''; snap.forEach((child) => { const div = document.createElement('div'); div.innerHTML = `REQ: ${child.val().from} <button class="cyber-btn" onclick="acceptFriend('${child.val().from}','${child.val().fromUid}')">ACCEPT</button>`; list.appendChild(div); }); }); }
+    function listenRequests() { onValue(ref(db, `requests/${currentUid}`), (snap) => { const list = document.getElementById('req-list'); list.innerHTML = ''; snap.forEach((child) => { const div = document.createElement('div'); div.innerHTML = `<div style="font-size:11px; margin-bottom:10px;">REQ: ${child.val().from} <button class="cyber-btn" onclick="acceptFriend('${child.val().from}','${child.val().fromUid}')">ACCEPT</button></div>`; list.appendChild(div); }); }); }
     window.acceptFriend = async (n, u) => { await set(ref(db, `friends/${currentUid}/${u}`), { name: n }); await set(ref(db, `friends/${u}/${currentUid}`), { name: currentUsername }); remove(ref(db, `requests/${currentUid}/${u}`)); };
-    window.sendFriendRequest = async () => { const t = document.getElementById('target-user').value.toLowerCase().trim(); const snap = await get(ref(db, `users/${t}`)); if(snap.exists()){ set(ref(db, `requests/${snap.val().uid}/${currentUid}`), { from: currentUsername, fromUid: currentUid }); } };
+    window.sendFriendRequest = async () => { const t = document.getElementById('target-user').value.toLowerCase().trim(); if(t === currentUsername) return; const snap = await get(ref(db, `users/${t}`)); if(snap.exists()){ set(ref(db, `requests/${snap.val().uid}/${currentUid}`), { from: currentUsername, fromUid: currentUid }); } else { alert("IDENTITY_NOT_FOUND"); } };
 </script>
 </body>
 </html>
