@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>PRIVATE_MSG // CYBER_OS</title>
+    <title>PRIVATE_MSG // STABLE_MASTER</title>
     
     <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
     <script>
@@ -12,13 +12,10 @@
     </script>
 
     <style>
-        :root { --pink: #ff0055; --blue: #00f2ff; --bg: #050505; --green: #00ff00; --grey: #555; }
+        :root { --pink: #ff0055; --blue: #00f2ff; --bg: #050505; --green: #00ff00; --grey: #444; }
         body { background: black url('https://wallpaperaccess.com/full/1324706.jpg') no-repeat center center fixed; background-size: cover; color: white; font-family: 'Courier New', monospace; margin: 0; overflow: hidden; height: 100vh; }
-        .scanlines { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%); background-size: 100% 4px; pointer-events: none; z-index: 100; opacity: 0.1; }
         
-        /* Auth Screen */
-        #auth-gate { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: black; z-index: 3000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        #glitch-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 4000; display: none; align-items: center; justify-content: center; color: black; font-weight: bold; animation: glitchSync 0.2s infinite; }
+        #glitch-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 2000; display: none; align-items: center; justify-content: center; color: black; font-weight: bold; animation: glitchSync 0.2s infinite; }
         @keyframes glitchSync { 0% { background: var(--pink); transform: skew(3deg); } 50% { background: var(--blue); transform: skew(-3deg); } 100% { background: white; } }
 
         #call-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 1000; display: none; flex-direction: column; align-items: center; justify-content: center; border: 4px solid var(--blue); }
@@ -30,15 +27,10 @@
         .offline { background: red; }
 
         #chat-window { flex: 1; display: none; flex-direction: column; height: 100%; position: relative; }
-        #messages { flex: 1; overflow-y: auto; padding: 15px; font-size: 14px; display: flex; flex-direction: column; padding-bottom: 110px; }
-        .input-dock { position: absolute; bottom: 0; left: 0; width: 100%; display: flex; align-items: center; border-top: 2px solid var(--blue); background: black; padding: 10px; box-sizing: border-box; }
-        
+        #messages { flex: 1; overflow-y: auto; padding: 15px; font-size: 14px; display: flex; flex-direction: column; padding-bottom: 120px; }
+        .input-dock { position: absolute; bottom: 0; left: 0; width: 100%; display: flex; align-items: center; border-top: 2px solid var(--blue); background: black; padding: 12px; box-sizing: border-box; }
         .cyber-btn { background: transparent; color: var(--pink); border: 2px solid var(--pink); padding: 8px 12px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 10px; }
-        .msg { margin-bottom: 12px; padding: 10px; border-radius: 8px; max-width: 80%; border: 1px solid transparent; position: relative; word-wrap: break-word; }
-        .msg.me { align-self: flex-end; border-color: var(--blue); color: var(--blue); }
-        .msg.them { align-self: flex-start; border-color: var(--pink); color: var(--pink); }
         
-        /* Seen Ticks */
         .tick { position: absolute; bottom: 2px; right: 5px; font-size: 10px; font-weight: bold; }
         .seen { color: var(--green); }
         .sent { color: var(--grey); }
@@ -46,52 +38,40 @@
 </head>
 <body>
 
-<div id="glitch-overlay">DATA_VOID_COMPLETE</div>
-
-<div id="auth-gate">
-    <h2 style="color: var(--pink); letter-spacing: 5px;">IDENTITY_REQUIRED</h2>
-    <input type="text" id="auth-user" placeholder="USERNAME" style="background: black; border: 1px solid var(--blue); color: white; padding: 15px; width: 250px; margin-bottom: 10px;">
-    <input type="password" id="auth-pass" placeholder="PASSWORD" style="background: black; border: 1px solid var(--blue); color: white; padding: 15px; width: 250px; margin-bottom: 20px;">
-    <button class="cyber-btn" onclick="handleAuth()" style="width: 250px;">INITIALIZE_UPLINK</button>
-</div>
+<div id="glitch-overlay">UPLINK_DATA_VOID</div>
 
 <div id="call-screen">
-    <div style="font-size: 10px; color: var(--blue);">SECURE_VOICE_LINK</div>
+    <div style="font-size: 10px; color: var(--blue); letter-spacing: 2px;">SECURE_VOICE_BRIDGE</div>
     <h2 id="caller-display" style="color: white; margin-top: 20px; letter-spacing: 5px;">---</h2>
     <div id="call-timer" style="font-size: 28px; color: var(--blue); margin: 20px 0;">00:00</div>
     <div style="display:flex; flex-direction:column; gap:20px;">
-        <button id="ans-btn" class="cyber-btn" style="color:var(--green); border-color:var(--green); width:240px;" onclick="acceptCall()">ACCEPT</button>
-        <button class="cyber-btn" style="color:red; border-color:red; width:240px;" onclick="endCall()">TERMINATE</button>
+        <button id="ans-btn" class="cyber-btn" style="color:var(--green); border-color:var(--green); width:240px;" onclick="acceptUplink()">ACCEPT_SIGNAL</button>
+        <button class="cyber-btn" style="color:red; border-color:red; width:240px;" onclick="terminateGlobalCall()">TERMINATE</button>
     </div>
 </div>
+
+<audio id="remote-audio-bridge" autoplay></audio>
 
 <div class="os-container">
     <div class="sidebar">
         <div id="friends-list"></div>
-        <button class="cyber-btn" onclick="document.getElementById('ring-picker').click()" style="margin-top:auto; font-size:7px;">SET_RING</button>
-        <input type="file" id="ring-picker" hidden onchange="saveRing(this)">
+        <button class="cyber-btn" onclick="logout()" style="margin-top:auto; font-size:7px;">LOGOUT</button>
     </div>
     <div class="main-view" style="display: flex; flex-direction: column; height: 100%; overflow: hidden;">
-        <div class="header" style="padding: 14px; border-bottom: 2px solid var(--pink); display: flex; justify-content: space-between; font-size: 11px; background: black;">
-            <span id="user-display">OS_OFFLINE</span>
-            <span onclick="logout()" style="color: var(--pink); cursor: pointer;">[LOGOUT]</span>
-        </div>
         <div id="init-screen" style="padding: 20px;">
+            <div style="font-size: 10px; color: var(--pink); margin-bottom: 20px;">SYSTEM_ID: <span id="user-display">PENDING...</span></div>
             <input type="text" id="target-user" placeholder="SEARCH_ID..." style="border-bottom: 2px solid var(--blue); width: 100%; background:transparent; color:var(--blue); padding:10px;">
-            <button class="cyber-btn" onclick="sendFriendRequest()" style="width: 100%; margin-top: 15px;">ADD_FRIEND</button>
-            <div id="req-list" style="margin-top: 25px;"></div>
+            <button class="cyber-btn" onclick="sendFriendRequest()" style="width: 100%; margin-top:15px;">ADD_IDENTITY</button>
+            <div id="req-list" style="margin-top: 30px;"></div>
         </div>
         <div id="chat-window">
             <div style="display:flex; justify-content: space-around; padding:12px; border-bottom:1px solid var(--blue); background:rgba(0,0,0,0.5);">
-                <button class="cyber-btn" style="color:var(--green); border-color:var(--green);" onclick="initCall()">VOICE</button>
-                <button class="cyber-btn" style="color:yellow; border-color:yellow;" onclick="mutualDestruct()">DESTROY</button>
+                <button class="cyber-btn" style="color:var(--green); border-color:var(--green);" onclick="initiateCall()">VOICE</button>
                 <button class="cyber-btn" onclick="exitChat()">BACK</button>
             </div>
             <div id="messages"></div>
             <div class="input-dock" id="bottom-dock">
-                <div style="color: var(--blue); border: 2px solid var(--blue); border-radius: 50%; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 20px; margin-right: 10px;" onclick="document.getElementById('file-input').click()">+</div>
-                <input type="file" id="file-input" hidden onchange="uploadMedia(this)">
-                <input type="text" id="msg-input" placeholder="PRIVATE_STREAM...">
+                <input type="text" id="msg-input" placeholder="PRIVATE_STREAM..." style="flex:1; background:transparent; border:none; color:var(--blue); outline:none;">
                 <button class="cyber-btn" onclick="sendMessage()">SEND</button>
             </div>
         </div>
@@ -100,7 +80,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getDatabase, ref, set, push, onValue, remove, onDisconnect, update, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    import { getDatabase, ref, set, push, onValue, remove, onDisconnect, update, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
     import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
     const firebaseConfig = {
@@ -115,95 +95,94 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
     const auth = getAuth(app);
-
-    let currentUid = "", currentUsername = "", partnerUid = "", timerRef = null;
-    let ringAudio = new Audio(); const beep = new Audio("https://actions.google.com/sounds/v1/alarms/beep_short.ogg");
-
-    if (window.visualViewport) {
-        window.visualViewport.addEventListener('resize', () => {
-            document.getElementById('bottom-dock').style.bottom = `${window.innerHeight - window.visualViewport.height}px`;
-        });
-    }
+    let currentUid = "", currentUsername = "", partnerUid = "", globalTimerRef = null;
 
     onAuthStateChanged(auth, async (user) => { 
         if (!user) await signInAnonymously(auth);
         const saved = localStorage.getItem('rt_session');
-        if (saved) { login(JSON.parse(saved).u, JSON.parse(saved).uid); }
-        else { document.getElementById('auth-gate').style.display = 'flex'; }
+        if (saved) { 
+            const d = JSON.parse(saved); currentUsername = d.u; currentUid = d.uid;
+            initHardwareSync();
+        }
     });
 
-    window.handleAuth = async () => {
-        const u = document.getElementById('auth-user').value.toLowerCase().trim();
-        const p = document.getElementById('auth-pass').value.trim();
-        if(!u || !p) return;
-        const snap = await get(ref(db, `users/${u}`));
-        if(snap.exists() && snap.val().password !== p) return alert("UNAUTHORIZED");
-        const uid = snap.exists() ? snap.val().uid : auth.currentUser.uid;
-        if(!snap.exists()) await set(ref(db, `users/${u}`), { uid, password: p });
-        localStorage.setItem('rt_session', JSON.stringify({u, uid}));
-        login(u, uid);
-    };
-
-    function login(u, uid) {
-        currentUsername = u; currentUid = uid;
-        document.getElementById('auth-gate').style.display = 'none';
-        document.getElementById('user-display').innerText = u.toUpperCase();
-        set(ref(db, `status/${uid}`), { state: "online" });
-        onDisconnect(ref(db, `status/${uid}`)).set({ state: "offline" });
-        listenFriends(); listenRequests(); listenSignals();
-        window.OneSignal.push(() => OneSignal.setExternalUserId(uid));
+    function initHardwareSync() {
+        document.getElementById('user-display').innerText = currentUsername.toUpperCase();
+        // Socket Presence
+        onValue(ref(db, ".info/connected"), (snap) => {
+            if (snap.val() === true) {
+                set(ref(db, `status/${currentUid}`), { state: "online", lastSeen: serverTimestamp() });
+                onDisconnect(ref(db, `status/${currentUid}`)).set({ state: "offline", lastSeen: serverTimestamp() });
+            }
+        });
+        listenFriends(); listenSignals();
+        window.OneSignal.push(() => OneSignal.setExternalUserId(currentUid));
     }
 
+    // Fix: Mutual Termination & Global Sync Timer
     function listenSignals() {
         onValue(ref(db, `signals/${currentUid}`), (snap) => {
             if (snap.exists()) {
                 const s = snap.val();
-                if (s.type === 'ACCEPTED') { startLiveTimer(); } 
+                if (s.type === 'ACCEPTED') { startGlobalTimer(s.startTime); } 
                 else if (s.type === 'VOICE') {
                     document.getElementById('caller-display').innerText = s.from.toUpperCase();
                     document.getElementById('call-screen').style.display = 'flex';
-                    if(localStorage.getItem('rt_ring')) ringAudio.play(); else beep.play();
-                } else if (s.type === 'ENDED') { resetCallUI(); }
-                else if (s.type === 'MSG') { beep.play(); }
+                    document.getElementById('ans-btn').style.display = 'block';
+                } else if (s.type === 'ENDED') { resetMutualUI(); }
             }
         });
     }
 
-    window.initCall = () => {
+    window.initiateCall = () => {
         set(ref(db, `signals/${partnerUid}`), { from: currentUsername, fromUid: currentUid, type: 'VOICE' });
         document.getElementById('caller-display').innerText = "SIGNALING...";
         document.getElementById('call-screen').style.display = 'flex';
         document.getElementById('ans-btn').style.display = 'none';
     };
 
-    window.acceptCall = async () => {
-        ringAudio.pause(); try { await navigator.mediaDevices.getUserMedia({ audio: true }); } catch(e) {}
-        await set(ref(db, `signals/${partnerUid}`), { type: 'ACCEPTED' });
-        startLiveTimer();
+    window.acceptUplink = async () => {
+        const startTime = Date.now();
+        await set(ref(db, `signals/${partnerUid}`), { type: 'ACCEPTED', startTime: startTime });
+        startGlobalTimer(startTime);
     };
 
-    function startLiveTimer() {
-        let s = 0; document.getElementById('ans-btn').style.display = 'none';
-        timerRef = setInterval(() => { s++; document.getElementById('call-timer').innerText = `${Math.floor(s/60).toString().padStart(2,'0')}:${(s%60).toString().padStart(2,'0')}`; }, 1000);
+    function startGlobalTimer(startTime) {
+        document.getElementById('ans-btn').style.display = 'none';
+        globalTimerRef = setInterval(() => {
+            const diff = Math.floor((Date.now() - startTime) / 1000);
+            const m = Math.floor(diff / 60).toString().padStart(2, '0');
+            const s = (diff % 60).toString().padStart(2, '0');
+            document.getElementById('call-timer').innerText = `${m}:${s}`;
+        }, 1000);
     }
 
-    window.endCall = async () => {
-        clearInterval(timerRef); ringAudio.pause(); document.getElementById('call-screen').style.display = 'none';
+    window.terminateGlobalCall = async () => {
         await set(ref(db, `signals/${partnerUid}`), { type: 'ENDED' });
-        remove(ref(db, `signals/${currentUid}`));
+        resetMutualUI();
     };
-    function resetCallUI() { clearInterval(timerRef); document.getElementById('call-screen').style.display = 'none'; remove(ref(db, `signals/${currentUid}`)); }
 
+    function resetMutualUI() {
+        clearInterval(globalTimerRef);
+        document.getElementById('call-screen').style.display = 'none';
+        remove(ref(db, `signals/${currentUid}`));
+        document.getElementById('call-timer').innerText = "00:00";
+    }
+
+    // Fix: Actual Seen Status
     function openChat(name, uid) {
-        partnerUid = uid; document.getElementById('init-screen').style.display = 'none'; document.getElementById('chat-window').style.display = 'flex';
+        partnerUid = uid;
+        document.getElementById('init-screen').style.display = 'none';
+        document.getElementById('chat-window').style.display = 'flex';
         const chatId = currentUid < uid ? `${currentUid}_${uid}` : `${uid}_${currentUid}`;
         onValue(ref(db, `chats/${chatId}`), (s) => {
             const box = document.getElementById('messages'); box.innerHTML = '';
             s.forEach((m) => {
                 const d = m.val();
                 if (d.sender !== currentUid && !d.seen) { update(ref(db, `chats/${chatId}/${m.key}`), { seen: true }); }
-                const div = document.createElement('div'); div.className = d.sender === currentUid ? 'msg me' : 'msg them';
-                div.innerHTML = `> ${d.text} ${d.file ? `<br><a href="${d.file}" download="${d.fName}" style="color:var(--green); font-size:10px;">DATA_DOWNLOAD</a>` : ''} <span class="tick ${d.seen ? 'seen' : 'sent'}">${d.sender === currentUid ? '✓✓' : ''}</span>`;
+                const div = document.createElement('div');
+                div.className = d.sender === currentUid ? 'msg me' : 'msg them';
+                div.innerHTML = `> ${d.text} <span class="tick ${d.seen ? 'seen' : 'sent'}">${d.sender === currentUid ? '✓✓' : ''}</span>`;
                 box.appendChild(div);
             });
             box.scrollTop = box.scrollHeight;
@@ -211,36 +190,14 @@
     }
 
     window.sendMessage = () => {
-        const t = document.getElementById('msg-input').value; if(!t || !partnerUid) return;
-        const chatId = currentUid < partnerUid ? `${currentUid}_${partnerUid}` : `${partnerUid}_${currentUid}`;
-        push(ref(db, `chats/${chatId}`), { sender: currentUid, text: t, seen: false });
-        set(ref(db, `signals/${partnerUid}`), { type: 'MSG' });
+        const text = document.getElementById('msg-input').value; if(!text || !partnerUid) return;
+        push(ref(db, `chats/${currentUid < partnerUid ? currentUid+'_'+partnerUid : partnerUid+'_'+currentUid}`), { sender: currentUid, text, seen: false });
         document.getElementById('msg-input').value = '';
-    };
-
-    window.uploadMedia = (i) => {
-        const f = i.files[0]; if(!f) return; const r = new FileReader();
-        r.onload = (e) => { push(ref(db, `chats/${currentUid < partnerUid ? currentUid+'_'+partnerUid : partnerUid+'_'+currentUid}`), { sender: currentUid, text: `[FILE]: ${f.name}`, file: e.target.result, fName: f.name, seen: false }); };
-        r.readAsDataURL(f);
-    };
-
-    window.mutualDestruct = async () => {
-        const chatId = currentUid < partnerUid ? `${currentUid}_${partnerUid}` : `${partnerUid}_${currentUid}`;
-        document.getElementById('messages').innerHTML = "";
-        await set(ref(db, `destruct/${chatId}/${currentUid}`), true);
-        onValue(ref(db, `destruct/${chatId}`), (snap) => {
-            if (snap.exists() && Object.keys(snap.val()).length >= 2) {
-                document.getElementById('glitch-overlay').style.display = 'flex';
-                remove(ref(db, `chats/${chatId}`)); remove(ref(db, `destruct/${chatId}`));
-                setTimeout(() => { document.getElementById('glitch-overlay').style.display = 'none'; exitChat(); }, 2000);
-            }
-        });
     };
 
     window.logout = () => { localStorage.clear(); location.reload(); };
     window.exitChat = () => { document.getElementById('chat-window').style.display = 'none'; document.getElementById('init-screen').style.display = 'block'; partnerUid = ""; };
-    window.saveRing = (i) => { const r = new FileReader(); r.onload = (e) => { localStorage.setItem('rt_ring', e.target.result); ringAudio.src = e.target.result; }; r.readAsDataURL(i.files[0]); };
-    function listenFriends() { onValue(ref(db, `friends/${currentUid}`), (snap) => { const list = document.getElementById('friends-list'); list.innerHTML = ''; snap.forEach((child) => { const f = child.val(); const div = document.createElement('div'); div.className = 'friend-circle'; div.innerHTML = `<span>${f.name.substring(0,2).toUpperCase()}</span><div id="dot-${child.key}" class="status-dot offline"></div>`; div.onclick = () => openChat(f.name, child.key); list.appendChild(div); onValue(ref(db, `status/${child.key}`), (s) => { const dot = document.getElementById(`dot-${child.key}`); if(dot) dot.className = `status-dot ${s.val()?.state === 'online' ? 'online' : 'offline'}`; }); }); }); }
+    function listenFriends() { onValue(ref(db, `friends/${currentUid}`), (snap) => { const list = document.getElementById('friends-list'); list.innerHTML = ''; snap.forEach((child) => { const f = child.val(); const div = document.createElement('div'); div.className = 'friend-circle'; div.innerHTML = `<span>${f.name.substring(0,2).toUpperCase()}</span><div id="dot-${child.key}" class="status-dot offline"></div>`; div.onclick = () => openChat(f.name, child.key); list.appendChild(div); onValue(ref(db, `status/${child.key}`), (s) => { const dot = document.getElementById(`dot-${child.key}`); if (dot) dot.className = `status-dot ${s.val()?.state === 'online' ? 'online' : 'offline'}`; }); }); }); }
     function listenRequests() { onValue(ref(db, `requests/${currentUid}`), (snap) => { const list = document.getElementById('req-list'); list.innerHTML = ''; snap.forEach((child) => { const div = document.createElement('div'); div.innerHTML = `REQ: ${child.val().from} <button class="cyber-btn" onclick="acceptFriend('${child.val().from}','${child.val().fromUid}')">ACCEPT</button>`; list.appendChild(div); }); }); }
     window.acceptFriend = async (n, u) => { await set(ref(db, `friends/${currentUid}/${u}`), { name: n }); await set(ref(db, `friends/${u}/${currentUid}`), { name: currentUsername }); remove(ref(db, `requests/${currentUid}/${u}`)); };
     window.sendFriendRequest = async () => { const t = document.getElementById('target-user').value.toLowerCase().trim(); const snap = await get(ref(db, `users/${t}`)); if(snap.exists()){ set(ref(db, `requests/${snap.val().uid}/${currentUid}`), { from: currentUsername, fromUid: currentUid }); } };
