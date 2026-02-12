@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>PRIVATE_MSG // STABLE_MASTER_V16</title>
+    <title>PRIVATE_MSG // CORE_V17</title>
     
     <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
     <script>
@@ -32,6 +32,7 @@
         #chat-window { flex: 1; display: none; flex-direction: column; height: 100%; position: relative; }
         #messages { flex: 1; overflow-y: auto; padding: 15px; font-size: 14px; display: flex; flex-direction: column; padding-bottom: 130px; }
         .input-dock { position: absolute; bottom: 0; left: 0; width: 100%; display: flex; align-items: center; border-top: 2px solid var(--blue); background: black; padding: 12px; box-sizing: border-box; }
+        .plus-btn { color: var(--blue); border: 2px solid var(--blue); border-radius: 50%; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 20px; margin-right: 10px; font-weight: bold; }
         
         .cyber-btn { background: transparent; color: var(--pink); border: 2px solid var(--pink); padding: 8px 12px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 10px; }
         .msg { margin-bottom: 12px; padding: 10px; border-radius: 8px; max-width: 80%; border: 1px solid transparent; position: relative; word-wrap: break-word; }
@@ -42,7 +43,7 @@
 </head>
 <body>
 
-<div id="glitch-overlay">UPLINK_DATA_VOID</div>
+<div id="glitch-overlay">DATA_VOID_COMPLETE</div>
 
 <div id="auth-gate">
     <h2 style="color: var(--pink); letter-spacing: 5px;">IDENTITY_ACCESS</h2>
@@ -60,7 +61,7 @@
     </div>
 </div>
 
-<audio id="persistent-voice-bridge" autoplay></audio>
+<audio id="master-voice-bridge" autoplay></audio>
 
 <div class="os-container" id="main-view">
     <div class="sidebar">
@@ -84,7 +85,7 @@
             </div>
             <div id="messages"></div>
             <div class="input-dock" id="bottom-dock">
-                <div style="color: var(--blue); border: 2px solid var(--blue); border-radius: 50%; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 20px; margin-right: 10px; font-weight: bold;" onclick="document.getElementById('file-input').click()">+</div>
+                <div class="plus-btn" onclick="document.getElementById('file-input').click()">+</div>
                 <input type="file" id="file-input" hidden onchange="uploadMedia(this)">
                 <input type="text" id="msg-input" placeholder="PRIVATE_STREAM..." style="flex:1; background:transparent; border:none; color:var(--blue); outline:none;">
                 <button class="cyber-btn" onclick="sendMessage()">SEND</button>
@@ -110,8 +111,8 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
     const auth = getAuth(app);
-    let currentUid = "", currentUsername = "", partnerUid = "", globalTimer = null;
-    let ringAudio = new Audio(); const chirp = new Audio("https://actions.google.com/sounds/v1/alarms/beep_short.ogg");
+    let currentUid = "", currentUsername = "", partnerUid = "", syncTimer = null;
+    let ringAudio = new Audio(); const beep = new Audio("https://actions.google.com/sounds/v1/alarms/beep_short.ogg");
 
     if (window.visualViewport) {
         window.visualViewport.addEventListener('resize', () => {
@@ -150,19 +151,18 @@
         window.OneSignal.push(() => OneSignal.setExternalUserId(currentUid));
     }
 
-    // Fix: Persistent Audio & Button Reset
+    // Fix: Mirrored Timer & Termination Sync
     function listenSignals() {
         onValue(ref(db, `signals/${currentUid}`), (snap) => {
             if (snap.exists()) {
                 const s = snap.val();
-                if (s.type === 'ACCEPTED' && s.startTime) { syncTimer(s.startTime); } 
+                if (s.type === 'ACCEPTED' && s.startTime) { startMirroredClock(s.startTime); } 
                 else if (s.type === 'VOICE') {
                     document.getElementById('caller-display').innerText = s.from.toUpperCase();
                     document.getElementById('call-screen').style.display = 'flex';
-                    document.getElementById('ans-btn').style.display = 'block'; // Ensure Accept button shows
-                    if(localStorage.getItem('rt_ring')) ringAudio.play(); else chirp.play();
-                } else if (s.type === 'ENDED') { resetCallUI(); }
-                else if (s.type === 'MSG') { chirp.play(); }
+                    document.getElementById('ans-btn').style.display = 'block';
+                    if(localStorage.getItem('rt_ring')) ringAudio.play(); else beep.play();
+                } else if (s.type === 'ENDED') { forceGlobalReset(); }
             }
         });
     }
@@ -178,15 +178,16 @@
         ringAudio.pause(); const now = Date.now();
         await set(ref(db, `signals/${partnerUid}`), { type: 'ACCEPTED', startTime: now });
         try { 
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            document.getElementById('persistent-voice-bridge').srcObject = stream; // Maintain Audio Link
-        } catch(e) { console.log("BRIDGE_ERROR"); }
-        syncTimer(now);
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
+            document.getElementById('master-voice-bridge').srcObject = stream;
+        } catch(e) { console.log("AUDIO_INIT_FAIL"); }
+        startMirroredClock(now);
     };
 
-    function syncTimer(startTime) {
+    function startMirroredClock(startTime) {
         document.getElementById('ans-btn').style.display = 'none';
-        globalTimer = setInterval(() => {
+        clearInterval(syncTimer);
+        syncTimer = setInterval(() => {
             const diff = Math.floor((Date.now() - startTime) / 1000);
             if (diff < 0) return;
             const m = Math.floor(diff / 60).toString().padStart(2, '0');
@@ -197,17 +198,17 @@
 
     window.terminateGlobalCall = async () => {
         await set(ref(db, `signals/${partnerUid}`), { type: 'ENDED' });
-        resetCallUI();
+        forceGlobalReset();
     };
 
-    function resetCallUI() {
-        clearInterval(globalTimer); ringAudio.pause();
+    function forceGlobalReset() {
+        clearInterval(syncTimer); ringAudio.pause();
         document.getElementById('call-screen').style.display = 'none';
-        remove(ref(db, `signals/${currentUid}`)); // Full Server Cleanup
+        remove(ref(db, `signals/${currentUid}`));
         document.getElementById('call-timer').innerText = "00:00";
     }
 
-    // Mutual Destruction Protocol
+    // Mutual Destruction handshake
     window.mutualDestruct = async () => {
         const chatId = currentUid < partnerUid ? `${currentUid}_${partnerUid}` : `${partnerUid}_${currentUid}`;
         document.getElementById('messages').innerHTML = "";
@@ -231,7 +232,7 @@
                 if (d.sender !== currentUid && !d.seen) { update(ref(db, `chats/${chatId}/${m.key}`), { seen: true }); }
                 const div = document.createElement('div'); div.className = d.sender === currentUid ? 'msg me' : 'msg them';
                 let content = `> ${d.text}`;
-                if(d.file) content += `<br><a href="${d.file}" download="${d.fName}" style="color:var(--green); font-size:10px;">DATA_DOWNLOAD</a>`;
+                if(d.file) content += `<br><a href="${d.file}" download="${d.fName}" style="color:var(--green); font-size:10px;">DOWNLOAD_DATA</a>`;
                 content += `<span class="tick" style="color:${d.seen ? 'var(--green)' : 'var(--grey)'}">${d.sender === currentUid ? '✓✓' : ''}</span>`;
                 div.innerHTML = content; box.appendChild(div);
             });
