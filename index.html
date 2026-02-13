@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>PRIVATE_MSG // CORE_V17</title>
+    <title>PRIVATE_MSG // CORE_V18</title>
     
     <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
     <script>
@@ -61,7 +61,7 @@
     </div>
 </div>
 
-<audio id="master-voice-bridge" autoplay></audio>
+<audio id="vocal-bridge" autoplay></audio>
 
 <div class="os-container" id="main-view">
     <div class="sidebar">
@@ -151,18 +151,18 @@
         window.OneSignal.push(() => OneSignal.setExternalUserId(currentUid));
     }
 
-    // Fix: Mirrored Timer & Termination Sync
+    // Fix: Bi-Directional High-Gain Audio
     function listenSignals() {
         onValue(ref(db, `signals/${currentUid}`), (snap) => {
             if (snap.exists()) {
                 const s = snap.val();
-                if (s.type === 'ACCEPTED' && s.startTime) { startMirroredClock(s.startTime); } 
+                if (s.type === 'ACCEPTED' && s.startTime) { startMirroredTimer(s.startTime); } 
                 else if (s.type === 'VOICE') {
                     document.getElementById('caller-display').innerText = s.from.toUpperCase();
                     document.getElementById('call-screen').style.display = 'flex';
                     document.getElementById('ans-btn').style.display = 'block';
                     if(localStorage.getItem('rt_ring')) ringAudio.play(); else beep.play();
-                } else if (s.type === 'ENDED') { forceGlobalReset(); }
+                } else if (s.type === 'ENDED') { forceGlobalCleanup(); }
             }
         });
     }
@@ -179,12 +179,13 @@
         await set(ref(db, `signals/${partnerUid}`), { type: 'ACCEPTED', startTime: now });
         try { 
             const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
-            document.getElementById('master-voice-bridge').srcObject = stream;
-        } catch(e) { console.log("AUDIO_INIT_FAIL"); }
-        startMirroredClock(now);
+            const bridge = document.getElementById('vocal-bridge');
+            bridge.srcObject = stream; bridge.play(); // Force activation on browser
+        } catch(e) { console.log("HARDWARE_SYNC_FAIL"); }
+        startMirroredTimer(now);
     };
 
-    function startMirroredClock(startTime) {
+    function startMirroredTimer(startTime) {
         document.getElementById('ans-btn').style.display = 'none';
         clearInterval(syncTimer);
         syncTimer = setInterval(() => {
@@ -198,10 +199,10 @@
 
     window.terminateGlobalCall = async () => {
         await set(ref(db, `signals/${partnerUid}`), { type: 'ENDED' });
-        forceGlobalReset();
+        forceGlobalCleanup();
     };
 
-    function forceGlobalReset() {
+    function forceGlobalCleanup() {
         clearInterval(syncTimer); ringAudio.pause();
         document.getElementById('call-screen').style.display = 'none';
         remove(ref(db, `signals/${currentUid}`));
@@ -243,7 +244,6 @@
     window.sendMessage = () => {
         const t = document.getElementById('msg-input').value; if(!t || !partnerUid) return;
         push(ref(db, `chats/${currentUid < partnerUid ? currentUid+'_'+partnerUid : partnerUid+'_'+currentUid}`), { sender: currentUid, text: t, seen: false });
-        set(ref(db, `signals/${partnerUid}`), { type: 'MSG' });
         document.getElementById('msg-input').value = '';
     };
 
