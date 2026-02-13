@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>PRIVATE_MSG // MASTER_V37</title>
+    <title>PRIVATE_MSG // MASTER_V38</title>
     
     <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
     <script>
@@ -32,6 +32,9 @@
         #chat-window { flex: 1; display: none; flex-direction: column; height: 100%; position: relative; }
         #messages { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; padding-bottom: 140px; }
         
+        /* Chat Header Style */
+        #chat-header-identity { background: rgba(0, 242, 255, 0.1); border-bottom: 1px solid var(--blue); padding: 10px; text-align: center; font-size: 12px; color: var(--blue); letter-spacing: 2px; font-weight: bold; }
+
         .msg { margin-bottom: 18px; padding: 12px; border-radius: 12px; max-width: 80%; position: relative; line-height: 1.4; border: 1px solid transparent; }
         .msg.me { align-self: flex-end; border-color: var(--blue); color: var(--blue); background: rgba(0,242,255,0.05); margin-right: 15px; }
         .msg.them { align-self: flex-start; border-color: var(--pink); color: var(--pink); background: rgba(255,0,85,0.05); }
@@ -71,6 +74,7 @@
             <button class="cyber-btn" onclick="logout()" style="margin-top:30px; width:100%; border-color:white; color:white;">LOGOUT</button>
         </div>
         <div id="chat-window">
+            <div id="chat-header-identity">USER: ---</div>
             <div style="display:flex; justify-content: space-around; padding:12px; border-bottom:1px solid var(--blue); background:rgba(0,0,0,0.5);">
                 <button class="cyber-btn" style="color:yellow; border-color:yellow;" onclick="mutualDestruct()">DESTROY_CHAT</button>
                 <button class="cyber-btn" onclick="exitChat()">BACK</button>
@@ -106,11 +110,9 @@
     let currentUid = "", currentUsername = "", partnerUid = "", currentChatId = "";
     let appState = "HOME"; 
 
-    // Fix: Step-by-Step Back Navigation
     window.addEventListener('popstate', (e) => {
         if (appState === "PHOTO") closeMedia();
         else if (appState === "CHAT") exitChat();
-        else if (appState === "HOME") return; 
         history.pushState(null, null, null); 
     });
     history.pushState(null, null, null);
@@ -140,8 +142,6 @@
         document.getElementById('auth-gate').style.display = 'none';
         document.getElementById('main-view').style.display = 'grid';
         document.getElementById('user-display').innerText = currentUsername.toUpperCase();
-        
-        // Fix: Presence Socket
         onValue(ref(db, ".info/connected"), (snap) => {
             if (snap.val() === true) {
                 set(ref(db, `status/${currentUid}`), { state: "online" });
@@ -151,11 +151,13 @@
         listenFriends(); listenRequests();
     }
 
-    // Fix: Message Pathing & Surgical Unsend
     function openChat(name, uid) {
         partnerUid = uid; appState = "CHAT";
         document.getElementById('init-screen').style.display = 'none'; 
         document.getElementById('chat-window').style.display = 'flex';
+        // Identity Header Fix
+        document.getElementById('chat-header-identity').innerText = `USER: ${name.toUpperCase()}`;
+        
         currentChatId = currentUid < uid ? `${currentUid}_${uid}` : `${uid}_${currentUid}`;
         const box = document.getElementById('messages');
         
@@ -199,33 +201,19 @@
         r.readAsDataURL(f);
     };
 
-    // Fix: Zoom Engine
-    let scale = 1;
-    window.openMedia = (url) => {
-        appState = "PHOTO";
-        const overlay = document.getElementById('media-overlay');
-        const img = document.getElementById('overlay-img');
-        img.src = url; overlay.style.display = 'flex';
-        scale = 1; img.style.transform = `scale(1)`;
-    };
+    window.openMedia = (url) => { appState = "PHOTO"; const img = document.getElementById('overlay-img'); img.src = url; document.getElementById('media-overlay').style.display = 'flex'; img.style.transform = `scale(1)`; };
     window.closeMedia = () => { appState = "CHAT"; document.getElementById('media-overlay').style.display = 'none'; };
 
-    // Fix: Hard Severing Destruction (No reload)
     window.mutualDestruct = async () => {
         const cid = currentChatId;
         document.getElementById('messages').innerHTML = ""; 
         await set(ref(db, `destruct/${cid}/${currentUid}`), true);
-        
         onValue(ref(db, `destruct/${cid}`), (snap) => {
             if (snap.exists() && Object.keys(snap.val()).length >= 2) {
                 document.getElementById('glitch-overlay').style.display = 'flex';
-                off(ref(db, `chats/${cid}`)); // Physical listener serverance
-                remove(ref(db, `chats/${cid}`)); 
-                remove(ref(db, `destruct/${cid}`));
-                setTimeout(() => { 
-                    document.getElementById('glitch-overlay').style.display = 'none'; 
-                    exitChat(); 
-                }, 2000);
+                off(ref(db, `chats/${cid}`));
+                remove(ref(db, `chats/${cid}`)); remove(ref(db, `destruct/${cid}`));
+                setTimeout(() => { document.getElementById('glitch-overlay').style.display = 'none'; exitChat(); }, 2000);
             }
         });
     };
