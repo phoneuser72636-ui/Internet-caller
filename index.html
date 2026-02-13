@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>PRIVATE_MSG // MASTER_V34</title>
+    <title>PRIVATE_MSG // MASTER_V35</title>
     
     <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
     <script>
@@ -15,9 +15,9 @@
         :root { --pink: #ff0055; --blue: #00f2ff; --bg: #050505; --green: #00ff00; --grey: #444; }
         body { background: black url('https://wallpaperaccess.com/full/1324706.jpg') no-repeat center center fixed; background-size: cover; color: white; font-family: 'Courier New', monospace; margin: 0; overflow: hidden; height: 100vh; }
         
-        /* Lightbox Media Viewer */
-        #media-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 7000; display: none; align-items: center; justify-content: center; overflow: hidden; backdrop-filter: blur(10px); }
-        #overlay-img { max-width: 95%; max-height: 95%; transition: transform 0.2s ease; cursor: zoom-in; }
+        /* Lightbox Zoom Viewer */
+        #media-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 7000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(15px); }
+        #overlay-img { max-width: 95%; max-height: 95%; transition: transform 0.2s ease; cursor: grab; }
 
         #glitch-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 6000; display: none; align-items: center; justify-content: center; color: black; font-weight: bold; animation: glitchSync 0.2s infinite; }
         @keyframes glitchSync { 0% { background: var(--pink); transform: skew(3deg); } 50% { background: var(--blue); transform: skew(-3deg); } 100% { background: white; } }
@@ -29,16 +29,17 @@
         .online { background: var(--green); box-shadow: 0 0 10px var(--green); }
 
         #chat-window { flex: 1; display: none; flex-direction: column; height: 100%; position: relative; }
-        #messages { flex: 1; overflow-y: auto; padding: 15px; font-size: 14px; display: flex; flex-direction: column; padding-bottom: 140px; }
+        #messages { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; padding-bottom: 140px; }
         
         .msg { margin-bottom: 15px; padding: 12px; border-radius: 12px; max-width: 80%; position: relative; border: 1px solid transparent; }
         .msg.me { align-self: flex-end; border-color: var(--blue); color: var(--blue); background: rgba(0,242,255,0.05); }
         .msg.them { align-self: flex-start; border-color: var(--pink); color: var(--pink); background: rgba(255,0,85,0.05); }
         
-        .unsend-trigger { position: absolute; top: -8px; right: 0; background: red; color: white; font-size: 7px; padding: 2px 4px; border-radius: 3px; cursor: pointer; display: none; }
-        .msg.me:hover .unsend-trigger { display: block; }
+        /* Unsend Button Style */
+        .unsend-btn { position: absolute; left: -25px; top: 50%; transform: translateY(-50%); color: red; font-weight: bold; cursor: pointer; font-size: 14px; opacity: 0.6; padding: 5px; transition: 0.2s; }
+        .unsend-btn:hover { opacity: 1; transform: translateY(-50%) scale(1.2); }
         
-        .chat-media { max-width: 100%; border-radius: 8px; margin-top: 8px; display: block; cursor: pointer; }
+        .chat-media { max-width: 100%; border-radius: 8px; margin-top: 8px; display: block; cursor: zoom-in; }
         .input-dock { position: absolute; bottom: 0; left: 0; width: 100%; display: flex; align-items: center; border-top: 2px solid var(--blue); background: black; padding: 12px; box-sizing: border-box; }
         .cyber-btn { background: transparent; color: var(--pink); border: 2px solid var(--pink); padding: 8px 12px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 10px; }
     </style>
@@ -46,10 +47,10 @@
 <body>
 
 <div id="media-overlay" onclick="closeMedia()">
-    <img id="overlay-img" src="" alt="ZOOM_VIEW" onclick="event.stopPropagation()">
+    <img id="overlay-img" src="" alt="VIEW" onclick="event.stopPropagation()">
 </div>
 
-<div id="glitch-overlay">UPLINK_TERMINATED</div>
+<div id="glitch-overlay">UPLINK_WIPED_DATA_VOID</div>
 
 <div id="auth-gate" style="position:fixed; top:0; left:0; width:100%; height:100%; background:black; z-index:5000; display:flex; flex-direction:column; align-items:center; justify-content:center;">
     <h2 style="color: var(--pink); letter-spacing: 5px;">IDENTITY_REQUIRED</h2>
@@ -70,14 +71,14 @@
         </div>
         <div id="chat-window">
             <div style="display:flex; justify-content: space-around; padding:12px; border-bottom:1px solid var(--blue); background:rgba(0,0,0,0.5);">
-                <button class="cyber-btn" style="color:yellow; border-color:yellow;" onclick="mutualDestruct()">DESTROY</button>
+                <button class="cyber-btn" style="color:yellow; border-color:yellow;" onclick="mutualDestruct()">DESTROY_CHAT</button>
                 <button class="cyber-btn" onclick="exitChat()">BACK</button>
             </div>
             <div id="messages"></div>
             <div class="input-dock" id="bottom-dock">
                 <div style="color: var(--blue); border: 2px solid var(--blue); border-radius: 50%; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 20px; margin-right: 10px;" onclick="document.getElementById('file-input').click()">+</div>
                 <input type="file" id="file-input" hidden onchange="uploadMedia(this)">
-                <input type="text" id="msg-input" placeholder="ENCRYPTED_STREAM..." style="flex:1; background:transparent; border:none; color:var(--blue); outline:none;">
+                <input type="text" id="msg-input" placeholder="PRIVATE_STREAM..." style="flex:1; background:transparent; border:none; color:var(--blue); outline:none;">
                 <button class="cyber-btn" onclick="sendMessage()">SEND</button>
             </div>
         </div>
@@ -133,12 +134,13 @@
         listenFriends(); listenRequests();
     }
 
-    // Fix: Unsend & Media Zoom Integration
+    // Fix: Zombie Cache Cleared & Unsend Trigger Added
     function openChat(name, uid) {
         partnerUid = uid; document.getElementById('init-screen').style.display = 'none'; document.getElementById('chat-window').style.display = 'flex';
         const chatId = currentUid < uid ? `${currentUid}_${uid}` : `${uid}_${currentUid}`;
         const box = document.getElementById('messages');
         
+        // Sever previous cache connections
         off(ref(db, `chats/${chatId}`));
         onValue(ref(db, `chats/${chatId}`), (snapshot) => {
             box.innerHTML = '';
@@ -147,12 +149,13 @@
                 const div = document.createElement('div');
                 div.className = d.sender === currentUid ? 'msg me' : 'msg them';
                 
-                let unsend = d.sender === currentUid ? `<div class="unsend-trigger" onclick="unsendMsg('${chatId}','${child.key}')">UNSEND</div>` : '';
+                // Real-time Unsend Side-Trigger
+                let unsend = d.sender === currentUid ? `<span class="unsend-btn" onclick="unsendMsg('${chatId}','${child.key}')">✖</span>` : '';
                 let content = `<div>${d.text}</div>`;
                 if(d.media) {
                     content += `<img src="${d.media}" class="chat-media" onclick="openMedia('${d.media}')">`;
                 }
-                div.innerHTML = unsend + content + `<span style="font-size:8px; float:right; opacity:0.5; margin-top:5px;">✓✓</span>`;
+                div.innerHTML = unsend + content;
                 box.appendChild(div);
             });
             box.scrollTop = box.scrollHeight;
@@ -179,33 +182,40 @@
     };
 
     // Zoom Engine
-    let scale = 1;
+    let currentScale = 1;
     window.openMedia = (url) => {
         const overlay = document.getElementById('media-overlay');
         const img = document.getElementById('overlay-img');
         img.src = url; overlay.style.display = 'flex';
-        scale = 1; img.style.transform = `scale(${scale})`;
+        currentScale = 1; img.style.transform = `scale(1)`;
     };
 
     window.closeMedia = () => { document.getElementById('media-overlay').style.display = 'none'; };
 
-    // Zoom Logic for PC Scroll
+    // Scroll Zoom Logic for PC
     document.getElementById('overlay-img').addEventListener('wheel', (e) => {
         e.preventDefault();
-        scale += e.deltaY * -0.001;
-        scale = Math.min(Math.max(0.5, scale), 4);
-        document.getElementById('overlay-img').style.transform = `scale(${scale})`;
+        currentScale += e.deltaY * -0.001;
+        currentScale = Math.min(Math.max(0.5, currentScale), 4);
+        document.getElementById('overlay-img').style.transform = `scale(${currentScale})`;
     });
 
+    // Fix: Permanent Destruction Hard-Wipe
     window.mutualDestruct = async () => {
         const chatId = currentUid < partnerUid ? `${currentUid}_${partnerUid}` : `${partnerUid}_${currentUid}`;
         document.getElementById('messages').innerHTML = ""; 
         await set(ref(db, `destruct/${chatId}/${currentUid}`), true);
+        
         onValue(ref(db, `destruct/${chatId}`), (snap) => {
             if (snap.exists() && Object.keys(snap.val()).length >= 2) {
                 document.getElementById('glitch-overlay').style.display = 'flex';
-                remove(ref(db, `chats/${chatId}`)); remove(ref(db, `destruct/${chatId}`));
-                setTimeout(() => { document.getElementById('glitch-overlay').style.display = 'none'; exitChat(); }, 2000);
+                // Hard-Wipe server paths
+                remove(ref(db, `chats/${chatId}`)); 
+                remove(ref(db, `destruct/${chatId}`));
+                setTimeout(() => { 
+                    document.getElementById('glitch-overlay').style.display = 'none'; 
+                    exitChat(); 
+                }, 2000);
             }
         });
     };
