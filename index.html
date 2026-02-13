@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>PRIVATE_MSG // MASTER_V33</title>
+    <title>PRIVATE_MSG // MASTER_V34</title>
     
     <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
     <script>
@@ -14,34 +14,40 @@
     <style>
         :root { --pink: #ff0055; --blue: #00f2ff; --bg: #050505; --green: #00ff00; --grey: #444; }
         body { background: black url('https://wallpaperaccess.com/full/1324706.jpg') no-repeat center center fixed; background-size: cover; color: white; font-family: 'Courier New', monospace; margin: 0; overflow: hidden; height: 100vh; }
-        .scanlines { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(rgba(18,16,16,0) 50%, rgba(0, 0, 0, 0.1) 50%); background-size: 100% 4px; pointer-events: none; z-index: 100; opacity: 0.1; }
         
+        /* Lightbox Media Viewer */
+        #media-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 7000; display: none; align-items: center; justify-content: center; overflow: hidden; backdrop-filter: blur(10px); }
+        #overlay-img { max-width: 95%; max-height: 95%; transition: transform 0.2s ease; cursor: zoom-in; }
+
         #glitch-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 6000; display: none; align-items: center; justify-content: center; color: black; font-weight: bold; animation: glitchSync 0.2s infinite; }
         @keyframes glitchSync { 0% { background: var(--pink); transform: skew(3deg); } 50% { background: var(--blue); transform: skew(-3deg); } 100% { background: white; } }
 
-        #call-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 1000; display: none; flex-direction: column; align-items: center; justify-content: center; border: 4px solid var(--blue); }
         .os-container { display: none; height: 100vh; grid-template-columns: 85px 1fr; border: 4px solid var(--pink); box-sizing: border-box; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); }
-        
         .sidebar { border-right: 2px solid var(--pink); display: flex; flex-direction: column; padding: 5px; height: 100%; background: rgba(0,0,0,0.9); }
-        .friend-circle { width: 55px; height: 55px; border: 2px solid var(--blue); border-radius: 50%; margin: 15px auto; display: flex; align-items: center; justify-content: center; position: relative; background: black; cursor: pointer; font-size: 18px; font-weight: bold; color: var(--blue); }
+        .friend-circle { width: 55px; height: 55px; border: 2px solid var(--blue); border-radius: 50%; margin: 15px auto; display: flex; align-items: center; justify-content: center; position: relative; background: black; cursor: pointer; font-weight: bold; color: var(--blue); }
         .status-dot { position: absolute; bottom: 2px; right: 2px; width: 14px; height: 14px; border-radius: 50%; border: 2px solid black; }
         .online { background: var(--green); box-shadow: 0 0 10px var(--green); }
-        
+
         #chat-window { flex: 1; display: none; flex-direction: column; height: 100%; position: relative; }
         #messages { flex: 1; overflow-y: auto; padding: 15px; font-size: 14px; display: flex; flex-direction: column; padding-bottom: 140px; }
         
-        .msg { margin-bottom: 15px; padding: 12px; border-radius: 12px; max-width: 80%; position: relative; line-height: 1.4; border: 1px solid transparent; cursor: pointer; }
-        .msg-sender { font-size: 9px; font-weight: bold; text-transform: uppercase; margin-bottom: 5px; display: block; opacity: 0.6; }
+        .msg { margin-bottom: 15px; padding: 12px; border-radius: 12px; max-width: 80%; position: relative; border: 1px solid transparent; }
         .msg.me { align-self: flex-end; border-color: var(--blue); color: var(--blue); background: rgba(0,242,255,0.05); }
         .msg.them { align-self: flex-start; border-color: var(--pink); color: var(--pink); background: rgba(255,0,85,0.05); }
-        .unsend-btn { display: none; position: absolute; top: -10px; right: 0; background: red; color: white; font-size: 8px; padding: 2px 5px; border-radius: 4px; cursor: pointer; }
-        .msg.me:hover .unsend-btn { display: block; }
         
+        .unsend-trigger { position: absolute; top: -8px; right: 0; background: red; color: white; font-size: 7px; padding: 2px 4px; border-radius: 3px; cursor: pointer; display: none; }
+        .msg.me:hover .unsend-trigger { display: block; }
+        
+        .chat-media { max-width: 100%; border-radius: 8px; margin-top: 8px; display: block; cursor: pointer; }
         .input-dock { position: absolute; bottom: 0; left: 0; width: 100%; display: flex; align-items: center; border-top: 2px solid var(--blue); background: black; padding: 12px; box-sizing: border-box; }
         .cyber-btn { background: transparent; color: var(--pink); border: 2px solid var(--pink); padding: 8px 12px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 10px; }
     </style>
 </head>
 <body>
+
+<div id="media-overlay" onclick="closeMedia()">
+    <img id="overlay-img" src="" alt="ZOOM_VIEW" onclick="event.stopPropagation()">
+</div>
 
 <div id="glitch-overlay">UPLINK_TERMINATED</div>
 
@@ -51,15 +57,6 @@
     <input type="password" id="auth-pass" placeholder="PASSWORD" style="background: black; border: 1px solid var(--blue); color: white; padding: 15px; width: 250px; margin-bottom: 20px;">
     <button class="cyber-btn" onclick="handleAuth()" style="width: 250px;">INITIALIZE</button>
 </div>
-
-<div id="call-screen">
-    <div id="caller-display" style="color: white; letter-spacing: 5px; margin-bottom: 10px;">---</div>
-    <div id="call-timer" style="font-size: 28px; color: var(--blue); margin: 20px 0;">00:00</div>
-    <button id="ans-btn" class="cyber-btn" style="color:var(--green); border-color:var(--green); width:240px; margin-bottom:15px;" onclick="acceptUplink()">ACCEPT</button>
-    <button class="cyber-btn" style="color:red; border-color:red; width:240px;" onclick="terminateGlobalCall()">TERMINATE</button>
-</div>
-
-<audio id="vocal-hardware-bridge" autoplay></audio>
 
 <div class="os-container" id="main-view">
     <div class="sidebar" id="friends-list"></div>
@@ -73,14 +70,13 @@
         </div>
         <div id="chat-window">
             <div style="display:flex; justify-content: space-around; padding:12px; border-bottom:1px solid var(--blue); background:rgba(0,0,0,0.5);">
-                <button class="cyber-btn" style="color:var(--green); border-color:var(--green);" onclick="initiateCall()">VOICE</button>
-                <button class="cyber-btn" style="color:yellow; border-color:yellow;" onclick="startMutualDestruct()">DESTROY</button>
+                <button class="cyber-btn" style="color:yellow; border-color:yellow;" onclick="mutualDestruct()">DESTROY</button>
                 <button class="cyber-btn" onclick="exitChat()">BACK</button>
             </div>
             <div id="messages"></div>
             <div class="input-dock" id="bottom-dock">
                 <div style="color: var(--blue); border: 2px solid var(--blue); border-radius: 50%; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 20px; margin-right: 10px;" onclick="document.getElementById('file-input').click()">+</div>
-                <input type="file" id="file-input" hidden onchange="handleMedia(this)">
+                <input type="file" id="file-input" hidden onchange="uploadMedia(this)">
                 <input type="text" id="msg-input" placeholder="ENCRYPTED_STREAM..." style="flex:1; background:transparent; border:none; color:var(--blue); outline:none;">
                 <button class="cyber-btn" onclick="sendMessage()">SEND</button>
             </div>
@@ -105,9 +101,7 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
     const auth = getAuth(app);
-    let currentUid = "", currentUsername = "", partnerUid = "", globalTimer = null, hwStream = null;
-    let ringAudio = new Audio(); const chirp = new Audio("https://actions.google.com/sounds/v1/alarms/beep_short.ogg");
-    let renderMap = new Set(); // Fix: Multi-message render lock
+    let currentUid = "", currentUsername = "", partnerUid = "";
 
     onAuthStateChanged(auth, async (user) => { 
         if (!user) await signInAnonymously(auth);
@@ -134,42 +128,31 @@
         document.getElementById('auth-gate').style.display = 'none';
         document.getElementById('main-view').style.display = 'grid';
         document.getElementById('user-display').innerText = currentUsername.toUpperCase();
-        onValue(ref(db, ".info/connected"), (snap) => {
-            if (snap.val() === true) {
-                set(ref(db, `status/${currentUid}`), { state: "online" });
-                onDisconnect(ref(db, `status/${currentUid}`)).set({ state: "offline" });
-            }
-        });
-        listenFriends(); listenRequests(); listenSignals();
-        window.OneSignal.push(() => OneSignal.setExternalUserId(currentUid));
+        set(ref(db, `status/${currentUid}`), { state: "online" });
+        onDisconnect(ref(db, `status/${currentUid}`)).set({ state: "offline" });
+        listenFriends(); listenRequests();
     }
 
-    // Fix: Sequential Stacking & Anti-Duplicate & Unsend
+    // Fix: Unsend & Media Zoom Integration
     function openChat(name, uid) {
         partnerUid = uid; document.getElementById('init-screen').style.display = 'none'; document.getElementById('chat-window').style.display = 'flex';
         const chatId = currentUid < uid ? `${currentUid}_${uid}` : `${uid}_${currentUid}`;
-        const box = document.getElementById('messages'); box.innerHTML = '';
-        renderMap.clear();
-
-        off(ref(db, `chats/${chatId}`)); // Clear existing listener
+        const box = document.getElementById('messages');
+        
+        off(ref(db, `chats/${chatId}`));
         onValue(ref(db, `chats/${chatId}`), (snapshot) => {
-            box.innerHTML = ''; // Fresh render for sequence integrity
+            box.innerHTML = '';
             snapshot.forEach((child) => {
                 const d = child.val();
-                if(renderMap.has(child.key)) return; // BLOCK DUPLICATES
-                
                 const div = document.createElement('div');
                 div.className = d.sender === currentUid ? 'msg me' : 'msg them';
-                div.id = `msg-${child.key}`;
                 
-                let unsend = d.sender === currentUid ? `<div class="unsend-btn" onclick="unsendMsg('${chatId}','${child.key}')">UNSEND</div>` : '';
-                let header = `<span class="msg-sender">${d.senderName}</span>`;
+                let unsend = d.sender === currentUid ? `<div class="unsend-trigger" onclick="unsendMsg('${chatId}','${child.key}')">UNSEND</div>` : '';
                 let content = `<div>${d.text}</div>`;
                 if(d.media) {
-                    if(d.mType === 'IMG') content += `<img src="${d.media}" style="max-width:100%; border-radius:8px; margin-top:8px;">`;
-                    else if(d.mType === 'VID') content += `<video src="${d.media}" style="max-width:100%; border-radius:8px; margin-top:8px;" controls></video>`;
+                    content += `<img src="${d.media}" class="chat-media" onclick="openMedia('${d.media}')">`;
                 }
-                div.innerHTML = unsend + header + content + `<span style="font-size:8px; float:right; margin-top:5px; opacity:0.5;">✓✓</span>`;
+                div.innerHTML = unsend + content + `<span style="font-size:8px; float:right; opacity:0.5; margin-top:5px;">✓✓</span>`;
                 box.appendChild(div);
             });
             box.scrollTop = box.scrollHeight;
@@ -181,69 +164,40 @@
     window.sendMessage = () => {
         const t = document.getElementById('msg-input').value; if(!t || !partnerUid) return;
         const chatId = currentUid < partnerUid ? `${currentUid}_${partnerUid}` : `${partnerUid}_${currentUid}`;
-        push(ref(db, `chats/${chatId}`), { 
-            sender: currentUid, 
-            senderName: currentUsername.toUpperCase(),
-            text: t 
-        });
+        push(ref(db, `chats/${chatId}`), { sender: currentUid, text: t });
         document.getElementById('msg-input').value = '';
     };
 
-    // Fix: Interactive VoIP Hardware Uplink
-    function listenSignals() {
-        onValue(ref(db, `signals/${currentUid}`), (snap) => {
-            if (snap.exists()) {
-                const s = snap.val();
-                if (s.type === 'ACCEPTED' && s.startTime) { syncTimer(s.startTime); } 
-                else if (s.type === 'VOICE') {
-                    document.getElementById('caller-display').innerText = s.from.toUpperCase();
-                    document.getElementById('call-screen').style.display = 'flex';
-                } else if (s.type === 'ENDED') { resetHardwareUI(); }
-            }
-        });
-    }
-
-    window.initiateCall = () => {
-        set(ref(db, `signals/${partnerUid}`), { from: currentUsername, fromUid: currentUid, type: 'VOICE' });
-        document.getElementById('caller-display').innerText = "SIGNALING...";
-        document.getElementById('call-screen').style.display = 'flex';
-        document.getElementById('ans-btn').style.display = 'none';
+    window.uploadMedia = (i) => {
+        const f = i.files[0]; if(!f || !partnerUid) return;
+        const r = new FileReader();
+        r.onload = (e) => {
+            const chatId = currentUid < partnerUid ? `${currentUid}_${partnerUid}` : `${partnerUid}_${currentUid}`;
+            push(ref(db, `chats/${chatId}`), { sender: currentUid, text: f.name, media: e.target.result });
+        };
+        r.readAsDataURL(f);
     };
 
-    window.acceptUplink = async () => {
-        const now = Date.now();
-        await set(ref(db, `signals/${partnerUid}`), { type: 'ACCEPTED', startTime: now });
-        try { 
-            hwStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
-            document.getElementById('vocal-hardware-bridge').srcObject = hwStream; 
-        } catch(e) { console.log("HW_FAIL"); }
-        syncTimer(now);
+    // Zoom Engine
+    let scale = 1;
+    window.openMedia = (url) => {
+        const overlay = document.getElementById('media-overlay');
+        const img = document.getElementById('overlay-img');
+        img.src = url; overlay.style.display = 'flex';
+        scale = 1; img.style.transform = `scale(${scale})`;
     };
 
-    function syncTimer(startTime) {
-        document.getElementById('ans-btn').style.display = 'none';
-        globalTimer = setInterval(() => {
-            const diff = Math.floor((Date.now() - startTime) / 1000);
-            if (diff < 0) return;
-            const m = Math.floor(diff / 60).toString().padStart(2, '0');
-            const s = (diff % 60).toString().padStart(2, '0');
-            document.getElementById('call-timer').innerText = `${m}:${s}`;
-        }, 1000);
-    }
+    window.closeMedia = () => { document.getElementById('media-overlay').style.display = 'none'; };
 
-    window.terminateGlobalCall = async () => {
-        await set(ref(db, `signals/${partnerUid}`), { type: 'ENDED' });
-        resetHardwareUI();
-    };
+    // Zoom Logic for PC Scroll
+    document.getElementById('overlay-img').addEventListener('wheel', (e) => {
+        e.preventDefault();
+        scale += e.deltaY * -0.001;
+        scale = Math.min(Math.max(0.5, scale), 4);
+        document.getElementById('overlay-img').style.transform = `scale(${scale})`;
+    });
 
-    function resetHardwareUI() {
-        clearInterval(globalTimer);
-        if(hwStream) { hwStream.getTracks().forEach(t => t.stop()); hwStream = null; }
-        document.getElementById('call-screen').style.display = 'none';
-        remove(ref(db, `signals/${currentUid}`));
-    }
-
-    window.startMutualDestruct = async () => {
+    window.mutualDestruct = async () => {
         const chatId = currentUid < partnerUid ? `${currentUid}_${partnerUid}` : `${partnerUid}_${currentUid}`;
         document.getElementById('messages').innerHTML = ""; 
         await set(ref(db, `destruct/${chatId}/${currentUid}`), true);
@@ -256,35 +210,7 @@
         });
     };
 
-    function listenFriends() {
-        onValue(ref(db, `friends/${currentUid}`), (snap) => {
-            const list = document.getElementById('friends-list'); list.innerHTML = '';
-            snap.forEach((child) => {
-                const f = child.val();
-                const div = document.createElement('div');
-                div.className = 'friend-circle';
-                div.innerHTML = `<span>${f.name.substring(0,2).toUpperCase()}</span><div id="dot-${child.key}" class="status-dot offline"></div>`;
-                div.onclick = () => openChat(f.name, child.key);
-                list.appendChild(div);
-                onValue(ref(db, `status/${child.key}`), (s) => {
-                    const dot = document.getElementById(`dot-${child.key}`);
-                    if (dot) dot.className = `status-dot ${s.val()?.state === 'online' ? 'online' : 'offline'}`;
-                });
-            });
-        });
-    }
-
-    window.handleMedia = (i) => {
-        const f = i.files[0]; if(!f || !partnerUid) return;
-        const r = new FileReader();
-        r.onload = (e) => {
-            const chatId = currentUid < partnerUid ? `${currentUid}_${partnerUid}` : `${partnerUid}_${currentUid}`;
-            let type = f.type.startsWith('image') ? 'IMG' : f.type.startsWith('video') ? 'VID' : 'FILE';
-            push(ref(db, `chats/${chatId}`), { sender: currentUid, senderName: currentUsername.toUpperCase(), text: f.name, media: e.target.result, mType: type });
-        };
-        r.readAsDataURL(f);
-    };
-
+    function listenFriends() { onValue(ref(db, `friends/${currentUid}`), (snap) => { const list = document.getElementById('friends-list'); list.innerHTML = ''; snap.forEach((child) => { const f = child.val(); const div = document.createElement('div'); div.className = 'friend-circle'; div.innerHTML = `<span>${f.name.substring(0,2).toUpperCase()}</span><div id="dot-${child.key}" class="status-dot"></div>`; div.onclick = () => openChat(f.name, child.key); list.appendChild(div); onValue(ref(db, `status/${child.key}`), (s) => { const dot = document.getElementById(`dot-${child.key}`); if (dot) dot.className = `status-dot ${s.val()?.state === 'online' ? 'online' : ''}`; }); }); }); }
     window.logout = () => { localStorage.clear(); location.reload(); };
     window.exitChat = () => { document.getElementById('chat-window').style.display = 'none'; document.getElementById('init-screen').style.display = 'block'; partnerUid = ""; };
     function listenRequests() { onValue(ref(db, `requests/${currentUid}`), (snap) => { const list = document.getElementById('req-list'); list.innerHTML = ''; snap.forEach((child) => { const div = document.createElement('div'); div.innerHTML = `<div style="font-size:11px; margin-bottom:10px;">REQ: ${child.val().from} <button class="cyber-btn" onclick="acceptFriend('${child.val().from}','${child.val().fromUid}')">ACCEPT</button></div>`; list.appendChild(div); }); }); }
