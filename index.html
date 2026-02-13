@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>PRIVATE_MSG // PRODUCTION_V25</title>
+    <title>PRIVATE_MSG // CORE_V26</title>
     
     <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
     <script>
@@ -24,16 +24,16 @@
         
         .sidebar { border-right: 2px solid var(--pink); display: flex; flex-direction: column; padding: 5px; height: 100%; background: rgba(0,0,0,0.9); }
         .friend-circle { width: 50px; height: 50px; border: 2px solid var(--blue); border-radius: 50%; margin: 15px auto; display: flex; align-items: center; justify-content: center; position: relative; background: black; cursor: pointer; }
-        .status-dot { position: absolute; bottom: 2px; right: 2px; width: 12px; height: 12px; border-radius: 50%; border: 2px solid black; transition: 0.3s; }
+        .status-dot { position: absolute; bottom: 2px; right: 2px; width: 12px; height: 12px; border-radius: 50%; border: 2px solid black; }
         .online { background: var(--green); box-shadow: 0 0 10px var(--green); }
         .offline { background: var(--grey); }
 
         #chat-window { flex: 1; display: none; flex-direction: column; height: 100%; position: relative; }
         #messages { flex: 1; overflow-y: auto; padding: 15px; font-size: 14px; display: flex; flex-direction: column; padding-bottom: 125px; }
-        .input-dock { position: absolute; bottom: 0; left: 0; width: 100%; display: flex; align-items: center; border-top: 2px solid var(--blue); background: black; padding: 10px; box-sizing: border-box; }
+        .input-dock { position: absolute; bottom: 0; left: 0; width: 100%; display: flex; align-items: center; border-top: 2px solid var(--blue); background: black; padding: 12px; box-sizing: border-box; }
         
         .cyber-btn { background: transparent; color: var(--pink); border: 2px solid var(--pink); padding: 8px 12px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 10px; }
-        .msg { margin-bottom: 12px; padding: 10px; border-radius: 8px; max-width: 80%; border: 1px solid transparent; position: relative; word-wrap: break-word; }
+        .msg { margin-bottom: 12px; padding: 12px; border-radius: 8px; max-width: 80%; border: 1px solid transparent; position: relative; word-wrap: break-word; }
         .msg.me { align-self: flex-end; border-color: var(--blue); color: var(--blue); }
         .msg.them { align-self: flex-start; border-color: var(--pink); color: var(--pink); }
         .tick { position: absolute; bottom: 3px; right: 5px; font-size: 10px; font-weight: bold; }
@@ -44,7 +44,7 @@
 <div id="glitch-overlay">UPLINK_TERMINATED</div>
 
 <div id="auth-gate" style="position:fixed; top:0; left:0; width:100%; height:100%; background:black; z-index:5000; display:flex; flex-direction:column; align-items:center; justify-content:center;">
-    <h2 style="color: var(--pink); letter-spacing: 5px;">IDENTITY_ACCESS</h2>
+    <h2 style="color: var(--pink); letter-spacing: 5px;">IDENTITY_REQUIRED</h2>
     <input type="text" id="auth-user" placeholder="USERNAME" style="background: black; border: 1px solid var(--blue); color: white; padding: 15px; width: 250px; margin-bottom: 10px; text-transform: lowercase;">
     <input type="password" id="auth-pass" placeholder="PASSWORD" style="background: black; border: 1px solid var(--blue); color: white; padding: 15px; width: 250px; margin-bottom: 20px;">
     <button class="cyber-btn" onclick="handleAuth()" style="width: 250px;">INITIALIZE</button>
@@ -57,7 +57,7 @@
     <button class="cyber-btn" style="color:red; border-color:red; width:240px;" onclick="terminateGlobalCall()">TERMINATE</button>
 </div>
 
-<audio id="master-hw-bridge" autoplay></audio>
+<audio id="vocal-hardware-bridge" autoplay></audio>
 
 <div class="os-container" id="main-view">
     <div class="sidebar">
@@ -109,7 +109,7 @@
     const auth = getAuth(app);
     let currentUid = "", currentUsername = "", partnerUid = "", globalTimer = null, localMediaStream = null;
     let ringAudio = new Audio(); const chirp = new Audio("https://actions.google.com/sounds/v1/alarms/beep_short.ogg");
-    let msgCache = new Set(); // Fix: Triple-Message Prevention
+    let renderedMsgMap = new Set(); // Fix: Multi-message prevention
 
     onAuthStateChanged(auth, async (user) => { 
         if (!user) await signInAnonymously(auth);
@@ -125,7 +125,7 @@
         const p = document.getElementById('auth-pass').value.trim();
         if(!u || !p) return;
         const snap = await get(ref(db, `users/${u}`));
-        if(snap.exists() && snap.val().password !== p) return alert("BAD_KEY");
+        if(snap.exists() && snap.val().password !== p) return alert("UNAUTHORIZED");
         const uid = snap.exists() ? snap.val().uid : auth.currentUser.uid;
         if(!snap.exists()) await set(ref(db, `users/${u}`), { uid, password: p });
         localStorage.setItem('rt_session', JSON.stringify({u, uid}));
@@ -137,7 +137,6 @@
         document.getElementById('main-view').style.display = 'grid';
         document.getElementById('user-display').innerText = currentUsername.toUpperCase();
         
-        // Fix: Realtime Presence Sync
         onValue(ref(db, ".info/connected"), (snap) => {
             if (snap.val() === true) {
                 set(ref(db, `status/${currentUid}`), { state: "online" });
@@ -148,12 +147,12 @@
         window.OneSignal.push(() => OneSignal.setExternalUserId(currentUid));
     }
 
-    // Fix: Bi-Directional High-Gain Audio
+    // Fix: Unified Calling Engine
     function listenSignals() {
         onValue(ref(db, `signals/${currentUid}`), (snap) => {
             if (snap.exists()) {
                 const s = snap.val();
-                if (s.type === 'ACCEPTED' && s.startTime) { syncMirroredTimer(s.startTime); } 
+                if (s.type === 'ACCEPTED' && s.startTime) { syncTimer(s.startTime); } 
                 else if (s.type === 'VOICE') {
                     document.getElementById('caller-display').innerText = s.from.toUpperCase();
                     document.getElementById('call-screen').style.display = 'flex';
@@ -175,14 +174,13 @@
         await set(ref(db, `signals/${partnerUid}`), { type: 'ACCEPTED', startTime: now });
         try { 
             localMediaStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
-            document.getElementById('master-hw-bridge').srcObject = localMediaStream;
+            document.getElementById('vocal-hardware-bridge').srcObject = localMediaStream;
         } catch(e) { console.log("AUDIO_INIT_FAIL"); }
-        syncMirroredTimer(now);
+        syncTimer(now);
     };
 
-    function syncMirroredTimer(startTime) {
+    function syncTimer(startTime) {
         document.getElementById('ans-btn').style.display = 'none';
-        clearInterval(globalTimer);
         globalTimer = setInterval(() => {
             const diff = Math.floor((Date.now() - startTime) / 1000);
             if (diff < 0 || isNaN(diff)) return;
@@ -205,10 +203,10 @@
         document.getElementById('call-timer').innerText = "00:00";
     }
 
-    // Fix: Logout-Free Mutual Destruction
+    // Fix: Anti-Logout Destruction Handshake
     window.mutualDestruct = async () => {
         const chatId = currentUid < partnerUid ? `${currentUid}_${partnerUid}` : `${partnerUid}_${currentUid}`;
-        document.getElementById('messages').innerHTML = ""; // Clear local view instantly
+        document.getElementById('messages').innerHTML = ""; // Clear view only
         await set(ref(db, `destruct/${chatId}/${currentUid}`), true);
         onValue(ref(db, `destruct/${chatId}`), (snap) => {
             if (snap.exists() && Object.keys(snap.val()).length >= 2) {
@@ -219,23 +217,24 @@
         });
     };
 
-    // Fix: WhatsApp Rendering (Photos & Videos)
+    // Fix: WhatsApp Rendering Engine
     function openChat(name, uid) {
         partnerUid = uid; document.getElementById('init-screen').style.display = 'none'; document.getElementById('chat-window').style.display = 'flex';
-        msgCache.clear();
+        renderedMsgMap.clear(); 
         const chatId = currentUid < uid ? `${currentUid}_${uid}` : `${uid}_${currentUid}`;
         onValue(ref(db, `chats/${chatId}`), (s) => {
             const box = document.getElementById('messages'); box.innerHTML = '';
             s.forEach((m) => {
-                if(msgCache.has(m.key)) return; // Prevent Repeats
+                if(renderedMsgMap.has(m.key)) return; // STOP DUPLICATES
+                renderedMsgMap.add(m.key);
                 const d = m.val();
                 if (d.sender !== currentUid && !d.seen) { update(ref(db, `chats/${chatId}/${m.key}`), { seen: true }); }
                 const div = document.createElement('div'); div.className = d.sender === currentUid ? 'msg me' : 'msg them';
                 let content = `<div>${d.text}</div>`;
                 if(d.media) {
-                    if(d.mType === 'IMG') content += `<img src="${d.media}" style="max-width:100%; border-radius:8px; margin-top:8px;">`;
-                    else if(d.mType === 'VID') content += `<video src="${d.media}" style="max-width:100%; border-radius:8px; margin-top:8px;" controls></video>`;
-                    else content += `<br><a href="${d.media}" download="${d.text}" style="color:var(--green); font-size:10px;">DATA_PACKET</a>`;
+                    if(d.mType === 'IMG') content += `<img src="${d.media}" style="max-width:100%; border-radius:8px; margin-top:10px;">`;
+                    else if(d.mType === 'VID') content += `<video src="${d.media}" style="max-width:100%; border-radius:8px; margin-top:10px;" controls></video>`;
+                    else content += `<br><a href="${d.media}" download="${d.text}" style="color:var(--green); font-size:10px;">DATA_DOWNLOAD</a>`;
                 }
                 content += `<span class="tick" style="color:${d.seen ? 'var(--green)' : 'var(--grey)'}">${d.sender === currentUid ? '✓✓' : ''}</span>`;
                 div.innerHTML = content; box.appendChild(div);
