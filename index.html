@@ -3,12 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>PRIVATE_MSG // CORE_V18</title>
+    <title>PRIVATE_MSG // CORE_V20</title>
     
     <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
     <script>
       window.OneSignal = window.OneSignal || [];
-      OneSignal.push(() => { OneSignal.init({ appId: "c00af28f-f943-4a78-aa65-1629d000bbab", allowLocalhostAsSecureOrigin: true }); });
+      OneSignal.push(() => { 
+          OneSignal.init({ appId: "c00af28f-f943-4a78-aa65-1629d000bbab", allowLocalhostAsSecureOrigin: true }); 
+      });
     </script>
 
     <style>
@@ -43,7 +45,7 @@
 </head>
 <body>
 
-<div id="glitch-overlay">DATA_VOID_COMPLETE</div>
+<div id="glitch-overlay">UPLINK_TERMINATED</div>
 
 <div id="auth-gate">
     <h2 style="color: var(--pink); letter-spacing: 5px;">IDENTITY_ACCESS</h2>
@@ -61,7 +63,7 @@
     </div>
 </div>
 
-<audio id="vocal-bridge" autoplay></audio>
+<audio id="hardware-voice-bridge" autoplay></audio>
 
 <div class="os-container" id="main-view">
     <div class="sidebar">
@@ -111,8 +113,8 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
     const auth = getAuth(app);
-    let currentUid = "", currentUsername = "", partnerUid = "", syncTimer = null;
-    let ringAudio = new Audio(); const beep = new Audio("https://actions.google.com/sounds/v1/alarms/beep_short.ogg");
+    let currentUid = "", currentUsername = "", partnerUid = "", globalTimer = null, hardwareStream = null;
+    let ringAudio = new Audio(); const chirp = new Audio("https://actions.google.com/sounds/v1/alarms/beep_short.ogg");
 
     if (window.visualViewport) {
         window.visualViewport.addEventListener('resize', () => {
@@ -134,7 +136,7 @@
         const p = document.getElementById('auth-pass').value.trim();
         if(!u || !p) return;
         const snap = await get(ref(db, `users/${u}`));
-        if(snap.exists() && snap.val().password !== p) return alert("UNAUTHORIZED");
+        if(snap.exists() && snap.val().password !== p) return alert("BAD_KEY");
         const uid = snap.exists() ? snap.val().uid : auth.currentUser.uid;
         if(!snap.exists()) await set(ref(db, `users/${u}`), { uid, password: p });
         localStorage.setItem('rt_session', JSON.stringify({u, uid}));
@@ -151,17 +153,17 @@
         window.OneSignal.push(() => OneSignal.setExternalUserId(currentUid));
     }
 
-    // Fix: Bi-Directional High-Gain Audio
+    // Fix: Persistent Background Listener
     function listenSignals() {
         onValue(ref(db, `signals/${currentUid}`), (snap) => {
             if (snap.exists()) {
                 const s = snap.val();
-                if (s.type === 'ACCEPTED' && s.startTime) { startMirroredTimer(s.startTime); } 
+                if (s.type === 'ACCEPTED' && s.startTime) { startMirroredClock(s.startTime); } 
                 else if (s.type === 'VOICE') {
                     document.getElementById('caller-display').innerText = s.from.toUpperCase();
                     document.getElementById('call-screen').style.display = 'flex';
                     document.getElementById('ans-btn').style.display = 'block';
-                    if(localStorage.getItem('rt_ring')) ringAudio.play(); else beep.play();
+                    if(localStorage.getItem('rt_ring')) ringAudio.play(); else chirp.play();
                 } else if (s.type === 'ENDED') { forceGlobalCleanup(); }
             }
         });
@@ -178,17 +180,16 @@
         ringAudio.pause(); const now = Date.now();
         await set(ref(db, `signals/${partnerUid}`), { type: 'ACCEPTED', startTime: now });
         try { 
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
-            const bridge = document.getElementById('vocal-bridge');
-            bridge.srcObject = stream; bridge.play(); // Force activation on browser
-        } catch(e) { console.log("HARDWARE_SYNC_FAIL"); }
-        startMirroredTimer(now);
+            hardwareStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
+            document.getElementById('hardware-voice-bridge').srcObject = hardwareStream;
+        } catch(e) { console.log("HARDWARE_ERROR"); }
+        startMirroredClock(now);
     };
 
-    function startMirroredTimer(startTime) {
+    function startMirroredClock(startTime) {
         document.getElementById('ans-btn').style.display = 'none';
-        clearInterval(syncTimer);
-        syncTimer = setInterval(() => {
+        clearInterval(globalTimer);
+        globalTimer = setInterval(() => {
             const diff = Math.floor((Date.now() - startTime) / 1000);
             if (diff < 0) return;
             const m = Math.floor(diff / 60).toString().padStart(2, '0');
@@ -203,13 +204,15 @@
     };
 
     function forceGlobalCleanup() {
-        clearInterval(syncTimer); ringAudio.pause();
+        clearInterval(globalTimer); ringAudio.pause();
+        // Force-kill hardware tracks
+        if(hardwareStream) { hardwareStream.getTracks().forEach(track => track.stop()); hardwareStream = null; }
+        document.getElementById('hardware-voice-bridge').srcObject = null;
         document.getElementById('call-screen').style.display = 'none';
         remove(ref(db, `signals/${currentUid}`));
         document.getElementById('call-timer').innerText = "00:00";
     }
 
-    // Mutual Destruction handshake
     window.mutualDestruct = async () => {
         const chatId = currentUid < partnerUid ? `${currentUid}_${partnerUid}` : `${partnerUid}_${currentUid}`;
         document.getElementById('messages').innerHTML = "";
@@ -244,6 +247,7 @@
     window.sendMessage = () => {
         const t = document.getElementById('msg-input').value; if(!t || !partnerUid) return;
         push(ref(db, `chats/${currentUid < partnerUid ? currentUid+'_'+partnerUid : partnerUid+'_'+currentUid}`), { sender: currentUid, text: t, seen: false });
+        set(ref(db, `signals/${partnerUid}`), { type: 'MSG' });
         document.getElementById('msg-input').value = '';
     };
 
