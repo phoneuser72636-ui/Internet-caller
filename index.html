@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>PRIVATE_MSG // MASTER_V53</title>
+    <title>PRIVATE_MSG // MASTER_V54</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
-    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 
     <style>
         :root { --pink: #ff0055; --blue: #00f2ff; --bg: #050505; --green: #00ff00; --grey: #444; }
@@ -34,7 +33,6 @@
         .msg.them { align-self: flex-start; border-color: var(--pink); color: var(--pink); background: rgba(255,0,85,0.05); }
         
         .unsend-btn { position: absolute; right: -25px; top: 50%; transform: translateY(-50%); color: red; font-weight: bold; cursor: pointer; font-size: 14px; padding: 5px; opacity: 0.4; }
-        .media-box { max-width: 100%; border-radius: 8px; margin-top: 8px; border: 1px solid rgba(255,255,255,0.1); cursor: zoom-in; }
         .input-dock { position: absolute; bottom: 0; left: 0; width: 100%; display: flex; align-items: center; border-top: 2px solid var(--blue); background: black; padding: 12px; box-sizing: border-box; }
         .cyber-btn { background: transparent; color: var(--pink); border: 2px solid var(--pink); padding: 8px 12px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 10px; }
         
@@ -47,7 +45,7 @@
     <img id="overlay-img" src="">
 </div>
 
-<div id="glitch-overlay">DATA_VOID_PURGED</div>
+<div id="glitch-overlay">DATA_VOID_WIPED</div>
 
 <div id="auth-gate" style="position:fixed; top:0; left:0; width:100%; height:100%; background:black; z-index:5000; display:flex; flex-direction:column; align-items:center; justify-content:center;">
     <h2 style="color: var(--pink); letter-spacing: 5px;">SECURE LOGIN</h2>
@@ -60,7 +58,7 @@
     <div class="sidebar" id="friends-list"></div>
     <div class="main-view" style="display: flex; flex-direction: column; height: 100%; overflow: hidden;">
         <div id="init-screen" style="padding: 20px;">
-            <div style="font-size: 10px; color: var(--pink); margin-bottom: 20px;">STATION: <span id="user-display">---</span></div>
+            <div style="font-size: 10px; color: var(--pink); margin-bottom: 20px;">TERMINAL: <span id="user-display">---</span></div>
             <input type="text" id="target-user" placeholder="SEARCH_ID..." style="border-bottom: 2px solid var(--blue); width: 100%; background:transparent; color:var(--blue); padding:10px;">
             <button class="cyber-btn" onclick="sendFriendRequest()" style="width: 100%; margin-top: 15px;">SEND REQUEST</button>
             <div id="sys-note"></div>
@@ -86,19 +84,17 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getDatabase, ref, set, push, onValue, off, remove, onDisconnect, update, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    import { getDatabase, ref, set, push, onValue, off, remove, onDisconnect, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
     import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
     const firebaseConfig = { apiKey: "AIzaSyD2WRzWp0pl2niRizDPF_kqUrHB4_gY8gA", authDomain: "radio-c49c0.firebaseapp.com", databaseURL: "https://radio-c49c0-default-rtdb.firebaseio.com", projectId: "radio-c49c0", messagingSenderId: "231017755170", appId: "1:231017755170:web:02df1616290fe2edcdd07b" };
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
     const auth = getAuth(app);
-    let currentUid = "", currentUsername = "", partnerUid = "", currentChatId = "", appState = "HOME", SESSION_KEY = "";
+    let currentUid = "", currentUsername = "", partnerUid = "", currentChatId = "", SESSION_KEY = "";
 
-    // ---------------------------------------------------------
     // SECURITY CORE
-    // ---------------------------------------------------------
-    const SALT = "STATION_V53_STABLE";
+    const SALT = "STATION_V54_FINAL";
     const deriveKey = (p) => CryptoJS.SHA256(p + SALT).toString();
     const encrypt = (v) => CryptoJS.AES.encrypt(v, SESSION_KEY).toString();
     const decrypt = (c) => { try { return CryptoJS.AES.decrypt(c, SESSION_KEY).toString(CryptoJS.enc.Utf8); } catch(e) { return "[ENC]"; } };
@@ -135,9 +131,7 @@
         listenFriends(); listenRequests();
     }
 
-    // ---------------------------------------------------------
-    // RELATIONSHIP ENGINE (ATOMIC HANDSHAKE)
-    // ---------------------------------------------------------
+    // FIXED: Non-Looping Request Engine
     window.sendFriendRequest = async () => {
         const target = document.getElementById('target-user').value.trim();
         if(!target || target === currentUsername) return;
@@ -151,6 +145,7 @@
     function listenRequests() {
         onValue(ref(db, `requests/${currentUid}`), (s) => {
             const l = document.getElementById('req-list'); l.innerHTML = '';
+            if(!s.exists()) return; // Protection against loop flickering
             s.forEach((c) => {
                 const d = c.val();
                 const div = document.createElement('div');
@@ -160,12 +155,13 @@
         });
     }
 
+    // FIXED: Atomic Handshake Striking
     window.acceptFriend = async (name, uid) => {
-        const updates = {};
-        updates[`friends/${currentUid}/${uid}`] = { name: name };
-        updates[`friends/${uid}/${currentUid}`] = { name: currentUsername };
-        updates[`requests/${currentUid}/${uid}`] = null;
-        await update(ref(db), updates);
+        // Step 1: Create mutual links
+        await set(ref(db, `friends/${currentUid}/${uid}`), { name: name });
+        await set(ref(db, `friends/${uid}/${currentUid}`), { name: currentUsername });
+        // Step 2: Physically remove the request from server (ends the loop)
+        await remove(ref(db, `requests/${currentUid}/${uid}`));
         notify("STATION_LINKED");
     };
 
@@ -187,11 +183,9 @@
         });
     }
 
-    // ---------------------------------------------------------
-    // MESSAGING & PURGE
-    // ---------------------------------------------------------
+    // MESSAGING
     function openChat(name, uid) {
-        partnerUid = uid; appState = "CHAT";
+        partnerUid = uid;
         document.getElementById('init-screen').style.display = 'none';
         document.getElementById('chat-window').style.display = 'flex';
         document.getElementById('chat-header-identity').innerText = `USER: ${name}`;
@@ -225,9 +219,9 @@
         }; r.readAsDataURL(i.files[0]);
     };
 
-    window.openMedia = (u) => { appState = "PHOTO"; document.getElementById('overlay-img').src = u; document.getElementById('media-overlay').style.display = 'flex'; };
-    window.closeMedia = () => { appState = "CHAT"; document.getElementById('media-overlay').style.display = 'none'; };
-    window.exitChat = () => { appState = "HOME"; document.getElementById('chat-window').style.display = 'none'; document.getElementById('init-screen').style.display = 'block'; partnerUid=""; };
+    window.openMedia = (u) => { document.getElementById('overlay-img').src = u; document.getElementById('media-overlay').style.display = 'flex'; };
+    window.closeMedia = () => { document.getElementById('media-overlay').style.display = 'none'; };
+    window.exitChat = () => { document.getElementById('chat-window').style.display = 'none'; document.getElementById('init-screen').style.display = 'block'; partnerUid=""; };
     window.logout = () => { localStorage.clear(); location.reload(); };
 
     window.mutualDestruct = async () => {
