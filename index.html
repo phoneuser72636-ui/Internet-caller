@@ -3,20 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>PRIVATE_MSG // MASTER_V38</title>
+    <title>PRIVATE_MSG // V40_SECURE</title>
     
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
-    <script>
-      window.OneSignal = window.OneSignal || [];
-      OneSignal.push(() => { OneSignal.init({ appId: "c00af28f-f943-4a78-aa65-1629d000bbab" }); });
-    </script>
 
     <style>
         :root { --pink: #ff0055; --blue: #00f2ff; --bg: #050505; --green: #00ff00; --grey: #444; }
         body { background: black url('https://wallpaperaccess.com/full/1324706.jpg') no-repeat center center fixed; background-size: cover; color: white; font-family: 'Courier New', monospace; margin: 0; overflow: hidden; height: 100vh; }
         
+        /* Media Navigation Overlays */
         #media-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.98); z-index: 7000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(20px); }
-        #overlay-img { max-width: 98%; max-height: 90%; transition: transform 0.2s; cursor: grab; }
+        #overlay-img { max-width: 95%; max-height: 90%; transition: transform 0.2s; cursor: grab; }
         .close-media-btn { position: absolute; top: 20px; right: 20px; font-size: 30px; color: var(--pink); cursor: pointer; z-index: 7001; }
 
         #glitch-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 6000; display: none; align-items: center; justify-content: center; color: black; font-weight: bold; animation: glitchSync 0.2s infinite; }
@@ -24,16 +22,14 @@
 
         .os-container { display: none; height: 100vh; grid-template-columns: 85px 1fr; border: 4px solid var(--pink); box-sizing: border-box; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); }
         .sidebar { border-right: 2px solid var(--pink); display: flex; flex-direction: column; padding: 5px; height: 100%; background: rgba(0,0,0,0.9); }
-        .friend-circle { width: 55px; height: 55px; border: 2px solid var(--blue); border-radius: 50%; margin: 15px auto; display: flex; align-items: center; justify-content: center; position: relative; background: black; cursor: pointer; font-weight: bold; color: var(--blue); }
-        .status-dot { position: absolute; bottom: 2px; right: 2px; width: 14px; height: 14px; border-radius: 50%; border: 2px solid black; }
+        .friend-circle { width: 55px; height: 55px; border: 2px solid var(--blue); border-radius: 50%; margin: 15px auto; display: flex; align-items: center; justify-content: center; position: relative; background: black; cursor: pointer; font-weight: bold; color: var(--blue); font-size: 18px; }
+        .status-dot { position: absolute; bottom: 2px; right: 2px; width: 14px; height: 14px; border-radius: 50%; border: 2px solid black; transition: 0.3s; }
         .online { background: var(--green); box-shadow: 0 0 10px var(--green); }
         .offline { background: var(--grey); }
 
         #chat-window { flex: 1; display: none; flex-direction: column; height: 100%; position: relative; }
         #messages { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; padding-bottom: 140px; }
-        
-        /* Chat Header Style */
-        #chat-header-identity { background: rgba(0, 242, 255, 0.1); border-bottom: 1px solid var(--blue); padding: 10px; text-align: center; font-size: 12px; color: var(--blue); letter-spacing: 2px; font-weight: bold; }
+        #chat-header-identity { background: rgba(0, 242, 255, 0.15); border-bottom: 1px solid var(--blue); padding: 12px; text-align: center; font-size: 11px; color: var(--blue); letter-spacing: 2px; font-weight: bold; }
 
         .msg { margin-bottom: 18px; padding: 12px; border-radius: 12px; max-width: 80%; position: relative; line-height: 1.4; border: 1px solid transparent; }
         .msg.me { align-self: flex-end; border-color: var(--blue); color: var(--blue); background: rgba(0,242,255,0.05); margin-right: 15px; }
@@ -42,7 +38,7 @@
         .unsend-btn { position: absolute; right: -25px; top: 50%; transform: translateY(-50%); color: red; font-weight: bold; cursor: pointer; font-size: 14px; padding: 5px; opacity: 0.4; }
         .unsend-btn:hover { opacity: 1; scale: 1.2; }
         
-        .media-box { max-width: 100%; border-radius: 8px; margin-top: 8px; border: 1px solid rgba(255,255,255,0.1); }
+        .media-box { max-width: 100%; border-radius: 8px; margin-top: 8px; border: 1px solid rgba(255,255,255,0.1); cursor: zoom-in; }
         .input-dock { position: absolute; bottom: 0; left: 0; width: 100%; display: flex; align-items: center; border-top: 2px solid var(--blue); background: black; padding: 12px; box-sizing: border-box; }
         .cyber-btn { background: transparent; color: var(--pink); border: 2px solid var(--pink); padding: 8px 12px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 10px; }
     </style>
@@ -51,25 +47,25 @@
 
 <div id="media-overlay">
     <div class="close-media-btn" onclick="closeMedia()">×</div>
-    <img id="overlay-img" src="" alt="ZOOM_VIEW" onclick="event.stopPropagation()">
+    <img id="overlay-img" src="" alt="SECURE_VIEW" onclick="event.stopPropagation()">
 </div>
 
 <div id="glitch-overlay">UPLINK_WIPED_DATA_VOID</div>
 
 <div id="auth-gate" style="position:fixed; top:0; left:0; width:100%; height:100%; background:black; z-index:5000; display:flex; flex-direction:column; align-items:center; justify-content:center;">
-    <h2 style="color: var(--pink); letter-spacing: 5px;">IDENTITY_REQUIRED</h2>
-    <input type="text" id="auth-user" placeholder="USERNAME" style="background: black; border: 1px solid var(--blue); color: white; padding: 15px; width: 250px; margin-bottom: 10px; text-transform: lowercase;">
-    <input type="password" id="auth-pass" placeholder="PASSWORD" style="background: black; border: 1px solid var(--blue); color: white; padding: 15px; width: 250px; margin-bottom: 20px;">
-    <button class="cyber-btn" onclick="handleAuth()" style="width: 250px;">INITIALIZE</button>
+    <h2 style="color: var(--pink); letter-spacing: 5px;">STATION_ACCESS_V40</h2>
+    <input type="text" id="auth-user" placeholder="SECURE_ID" style="background: black; border: 1px solid var(--blue); color: white; padding: 15px; width: 250px; margin-bottom: 10px; text-transform: lowercase;">
+    <input type="password" id="auth-pass" placeholder="SECRET_KEY" style="background: black; border: 1px solid var(--blue); color: white; padding: 15px; width: 250px; margin-bottom: 20px;">
+    <button class="cyber-btn" onclick="handleAuth()" style="width: 250px;">DECRYPT_STATION</button>
 </div>
 
 <div class="os-container" id="main-view">
     <div class="sidebar" id="friends-list"></div>
     <div class="main-view" style="display: flex; flex-direction: column; height: 100%; overflow: hidden;">
         <div id="init-screen" style="padding: 20px;">
-            <div style="font-size: 10px; color: var(--pink); margin-bottom: 20px;">ACTIVE_ID: <span id="user-display">---</span></div>
+            <div style="font-size: 10px; color: var(--pink); margin-bottom: 20px;">ACTIVE_TERMINAL: <span id="user-display">---</span></div>
             <input type="text" id="target-user" placeholder="SEARCH_ID..." style="border-bottom: 2px solid var(--blue); width: 100%; background:transparent; color:var(--blue); padding:10px;">
-            <button class="cyber-btn" onclick="sendFriendRequest()" style="width: 100%; margin-top: 15px;">ADD_FRIEND</button>
+            <button class="cyber-btn" onclick="sendFriendRequest()" style="width: 100%; margin-top: 15px;">LINK_FRIEND</button>
             <div id="req-list" style="margin-top: 30px;"></div>
             <button class="cyber-btn" onclick="logout()" style="margin-top:30px; width:100%; border-color:white; color:white;">LOGOUT</button>
         </div>
@@ -83,7 +79,7 @@
             <div class="input-dock" id="bottom-dock">
                 <div style="color: var(--blue); border: 2px solid var(--blue); border-radius: 50%; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 20px; margin-right: 10px;" onclick="document.getElementById('file-input').click()">+</div>
                 <input type="file" id="file-input" hidden onchange="uploadMedia(this)">
-                <input type="text" id="msg-input" placeholder="ENCRYPTED_STREAM..." style="flex:1; background:transparent; border:none; color:var(--blue); outline:none;">
+                <input type="text" id="msg-input" placeholder="SECURE_STREAM..." style="flex:1; background:transparent; border:none; color:var(--blue); outline:none;">
                 <button class="cyber-btn" onclick="sendMessage()">SEND</button>
             </div>
         </div>
@@ -95,21 +91,18 @@
     import { getDatabase, ref, set, push, onValue, off, remove, onDisconnect, update, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
     import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-    const firebaseConfig = {
-        apiKey: "AIzaSyD2WRzWp0pl2niRizDPF_kqUrHB4_gY8gA",
-        authDomain: "radio-c49c0.firebaseapp.com",
-        databaseURL: "https://radio-c49c0-default-rtdb.firebaseio.com",
-        projectId: "radio-c49c0",
-        messagingSenderId: "231017755170",
-        appId: "1:231017755170:web:02df1616290fe2edcdd07b"
-    };
-
+    const firebaseConfig = { apiKey: "AIzaSyD2WRzWp0pl2niRizDPF_kqUrHB4_gY8gA", authDomain: "radio-c49c0.firebaseapp.com", databaseURL: "https://radio-c49c0-default-rtdb.firebaseio.com", projectId: "radio-c49c0", messagingSenderId: "231017755170", appId: "1:231017755170:web:02df1616290fe2edcdd07b" };
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
     const auth = getAuth(app);
-    let currentUid = "", currentUsername = "", partnerUid = "", currentChatId = "";
-    let appState = "HOME"; 
+    let currentUid = "", currentUsername = "", partnerUid = "", currentChatId = "", appState = "HOME";
+    
+    // Security Params
+    const MASTER_SALT = "MSG_SALT_9900_X";
+    const encrypt = (val) => CryptoJS.AES.encrypt(val, MASTER_SALT).toString();
+    const decrypt = (cipher) => { try { return CryptoJS.AES.decrypt(cipher, MASTER_SALT).toString(CryptoJS.enc.Utf8); } catch(e) { return "[ENC_ERROR]"; } };
 
+    // Navigation Stack logic
     window.addEventListener('popstate', (e) => {
         if (appState === "PHOTO") closeMedia();
         else if (appState === "CHAT") exitChat();
@@ -120,32 +113,31 @@
     onAuthStateChanged(auth, async (user) => { 
         if (!user) await signInAnonymously(auth);
         const saved = localStorage.getItem('rt_session');
-        if (saved) { 
-            const d = JSON.parse(saved); currentUid = d.uid; currentUsername = d.u;
-            unlockUI();
-        }
+        if (saved) { login(JSON.parse(saved).u, JSON.parse(saved).uid); }
     });
 
     window.handleAuth = async () => {
         const u = document.getElementById('auth-user').value.toLowerCase().trim();
         const p = document.getElementById('auth-pass').value.trim();
         if(!u || !p) return;
+        const hashedPass = CryptoJS.SHA256(p + MASTER_SALT).toString();
         const snap = await get(ref(db, `users/${u}`));
-        if(snap.exists() && snap.val().password !== p) return alert("UNAUTHORIZED");
+        if(snap.exists() && snap.val().password !== hashedPass) return alert("UNAUTHORIZED");
         const uid = snap.exists() ? snap.val().uid : auth.currentUser.uid;
-        if(!snap.exists()) await set(ref(db, `users/${u}`), { uid, password: p });
+        if(!snap.exists()) await set(ref(db, `users/${u}`), { uid, password: hashedPass });
         localStorage.setItem('rt_session', JSON.stringify({u, uid}));
         location.reload();
     };
 
-    function unlockUI() {
+    function login(u, uid) {
+        currentUsername = u; currentUid = uid;
         document.getElementById('auth-gate').style.display = 'none';
         document.getElementById('main-view').style.display = 'grid';
-        document.getElementById('user-display').innerText = currentUsername.toUpperCase();
+        document.getElementById('user-display').innerText = u.toUpperCase();
         onValue(ref(db, ".info/connected"), (snap) => {
             if (snap.val() === true) {
-                set(ref(db, `status/${currentUid}`), { state: "online" });
-                onDisconnect(ref(db, `status/${currentUid}`)).set({ state: "offline" });
+                set(ref(db, `status/${uid}`), { state: "online" });
+                onDisconnect(ref(db, `status/${uid}`)).set({ state: "offline" });
             }
         });
         listenFriends(); listenRequests();
@@ -155,9 +147,7 @@
         partnerUid = uid; appState = "CHAT";
         document.getElementById('init-screen').style.display = 'none'; 
         document.getElementById('chat-window').style.display = 'flex';
-        // Identity Header Fix
         document.getElementById('chat-header-identity').innerText = `USER: ${name.toUpperCase()}`;
-        
         currentChatId = currentUid < uid ? `${currentUid}_${uid}` : `${uid}_${currentUid}`;
         const box = document.getElementById('messages');
         
@@ -170,38 +160,38 @@
                 div.className = d.sender === currentUid ? 'msg me' : 'msg them';
                 
                 let unsend = d.sender === currentUid ? `<span class="unsend-btn" onclick="unsendPacket('${child.key}')">✖</span>` : '';
-                let content = `<div>${d.text}</div>`;
+                let clearText = decrypt(d.text);
+                let content = `<div>${clearText}</div>`;
                 
                 if(d.media) {
-                    if(d.mType === 'IMG') content += `<img src="${d.media}" class="media-box" onclick="openMedia('${d.media}')" style="cursor:zoom-in;">`;
-                    else if(d.mType === 'VID') content += `<video src="${d.media}" class="media-box" controls></video>`;
+                    let clearMedia = decrypt(d.media);
+                    content += `<img src="${clearMedia}" class="media-box" onclick="openMedia('${clearMedia}')">`;
                 }
-                div.innerHTML = unsend + content;
+                div.innerHTML = unsend + content + `<span style="font-size:8px; float:right; opacity:0.5; margin-top:5px;">✓✓</span>`;
                 box.appendChild(div);
             });
             box.scrollTop = box.scrollHeight;
         });
     }
 
-    window.unsendPacket = (msgId) => { remove(ref(db, `chats/${currentChatId}/${msgId}`)); };
+    window.unsendPacket = (id) => remove(ref(db, `chats/${currentChatId}/${id}`));
 
     window.sendMessage = () => {
-        const t = document.getElementById('msg-input').value; if(!t || !partnerUid) return;
-        push(ref(db, `chats/${currentChatId}`), { sender: currentUid, text: t });
+        const t = document.getElementById('msg-input').value; if(!t) return;
+        push(ref(db, `chats/${currentChatId}`), { sender: currentUid, text: encrypt(t) });
         document.getElementById('msg-input').value = '';
     };
 
     window.uploadMedia = (i) => {
-        const f = i.files[0]; if(!f || !partnerUid) return;
+        const f = i.files[0]; if(!f) return;
         const r = new FileReader();
         r.onload = (e) => {
-            let type = f.type.startsWith('image') ? 'IMG' : 'VID';
-            push(ref(db, `chats/${currentChatId}`), { sender: currentUid, text: f.name, media: e.target.result, mType: type });
+            push(ref(db, `chats/${currentChatId}`), { sender: currentUid, text: encrypt(`[ENCRYPTED_MEDIA]`), media: encrypt(e.target.result) });
         };
         r.readAsDataURL(f);
     };
 
-    window.openMedia = (url) => { appState = "PHOTO"; const img = document.getElementById('overlay-img'); img.src = url; document.getElementById('media-overlay').style.display = 'flex'; img.style.transform = `scale(1)`; };
+    window.openMedia = (url) => { appState = "PHOTO"; document.getElementById('overlay-img').src = url; document.getElementById('media-overlay').style.display = 'flex'; };
     window.closeMedia = () => { appState = "CHAT"; document.getElementById('media-overlay').style.display = 'none'; };
 
     window.mutualDestruct = async () => {
@@ -211,8 +201,9 @@
         onValue(ref(db, `destruct/${cid}`), (snap) => {
             if (snap.exists() && Object.keys(snap.val()).length >= 2) {
                 document.getElementById('glitch-overlay').style.display = 'flex';
-                off(ref(db, `chats/${cid}`));
-                remove(ref(db, `chats/${cid}`)); remove(ref(db, `destruct/${cid}`));
+                off(ref(db, `chats/${cid}`)); // Physical Severing
+                remove(ref(db, `chats/${cid}`)); // Permanently delete from Firebase
+                remove(ref(db, `destruct/${cid}`));
                 setTimeout(() => { document.getElementById('glitch-overlay').style.display = 'none'; exitChat(); }, 2000);
             }
         });
@@ -220,7 +211,7 @@
 
     function listenFriends() { onValue(ref(db, `friends/${currentUid}`), (snap) => { const list = document.getElementById('friends-list'); list.innerHTML = ''; snap.forEach((child) => { const f = child.val(); const div = document.createElement('div'); div.className = 'friend-circle'; div.innerHTML = `<span>${f.name.substring(0,2).toUpperCase()}</span><div id="dot-${child.key}" class="status-dot offline"></div>`; div.onclick = () => openChat(f.name, child.key); list.appendChild(div); onValue(ref(db, `status/${child.key}`), (s) => { const dot = document.getElementById(`dot-${child.key}`); if (dot) dot.className = `status-dot ${s.val()?.state === 'online' ? 'online' : 'offline'}`; }); }); }); }
     window.logout = () => { localStorage.clear(); location.reload(); };
-    window.exitChat = () => { appState = "HOME"; document.getElementById('chat-window').style.display = 'none'; document.getElementById('init-screen').style.display = 'block'; partnerUid = ""; currentChatId = ""; };
+    window.exitChat = () => { appState = "HOME"; document.getElementById('chat-window').style.display = 'none'; document.getElementById('init-screen').style.display = 'block'; partnerUid = ""; };
     function listenRequests() { onValue(ref(db, `requests/${currentUid}`), (snap) => { const list = document.getElementById('req-list'); list.innerHTML = ''; snap.forEach((child) => { const div = document.createElement('div'); div.innerHTML = `<div style="font-size:11px; margin-bottom:10px;">REQ: ${child.val().from} <button class="cyber-btn" onclick="acceptFriend('${child.val().from}','${child.val().fromUid}')">ACCEPT</button></div>`; list.appendChild(div); }); }); }
     window.acceptFriend = async (n, u) => { await set(ref(db, `friends/${currentUid}/${u}`), { name: n }); await set(ref(db, `friends/${u}/${currentUid}`), { name: currentUsername }); remove(ref(db, `requests/${currentUid}/${u}`)); };
     window.sendFriendRequest = async () => { const t = document.getElementById('target-user').value.toLowerCase().trim(); const snap = await get(ref(db, `users/${t}`)); if(snap.exists()){ set(ref(db, `requests/${snap.val().uid}/${currentUid}`), { from: currentUsername, fromUid: currentUid }); } };
