@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>PRIVATE_MSG // MASTER_V50</title>
+    <title>PRIVATE_MSG // MASTER_V51</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 
@@ -13,10 +13,11 @@
         
         #media-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.98); z-index: 7000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(20px); }
         #overlay-img { max-width: 95%; max-height: 90%; transition: transform 0.2s; cursor: grab; }
+        .close-media-btn { position: absolute; top: 20px; right: 20px; font-size: 30px; color: var(--pink); cursor: pointer; z-index: 7001; }
 
         .os-container { display: none; height: 100vh; grid-template-columns: 85px 1fr; border: 4px solid var(--pink); box-sizing: border-box; background: rgba(0,0,0,0.85); }
         .sidebar { border-right: 2px solid var(--pink); display: flex; flex-direction: column; padding: 5px; height: 100%; background: rgba(0,0,0,0.9); }
-        .friend-circle { width: 55px; height: 55px; border: 2px solid var(--blue); border-radius: 50%; margin: 15px auto; display: flex; align-items: center; justify-content: center; position: relative; cursor: pointer; font-weight: bold; color: var(--blue); font-size: 14px; }
+        .friend-circle { width: 55px; height: 55px; border: 2px solid var(--blue); border-radius: 50%; margin: 15px auto; display: flex; align-items: center; justify-content: center; position: relative; cursor: pointer; font-weight: bold; color: var(--blue); font-size: 14px; text-transform: uppercase; }
         .status-dot { position: absolute; bottom: 2px; right: 2px; width: 14px; height: 14px; border-radius: 50%; border: 2px solid #000; }
         .online { background: var(--green); box-shadow: 0 0 10px var(--green); }
 
@@ -38,7 +39,8 @@
 </head>
 <body>
 
-<div id="media-overlay" onclick="closeMedia()">
+<div id="media-overlay">
+    <div class="close-media-btn" onclick="closeMedia()">×</div>
     <img id="overlay-img" src="">
 </div>
 
@@ -58,7 +60,7 @@
             <button class="cyber-btn" onclick="sendFriendRequest()" style="width:100%; margin-top:15px;">SEND REQUEST</button>
             <div id="sys-note"></div>
             <div id="req-list" style="margin-top:30px;"></div>
-            <button class="cyber-btn" onclick="logout()" style="margin-top:auto; width:100%; border-color:#fff; color:#fff;">LOGOUT</button>
+            <button class="cyber-btn" onclick="logout()" style="margin-top:auto; width:100%;">LOGOUT</button>
         </div>
         <div id="chat-window">
             <div id="chat-header-identity">USER: ---</div>
@@ -79,17 +81,17 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getDatabase, ref, set, push, onValue, off, remove, onDisconnect, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    import { getDatabase, ref, set, push, onValue, off, remove, onDisconnect, get, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
     import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
     const firebaseConfig = { apiKey: "AIzaSyD2WRzWp0pl2niRizDPF_kqUrHB4_gY8gA", authDomain: "radio-c49c0.firebaseapp.com", databaseURL: "https://radio-c49c0-default-rtdb.firebaseio.com", projectId: "radio-c49c0", messagingSenderId: "231017755170", appId: "1:231017755170:web:02df1616290fe2edcdd07b" };
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
     const auth = getAuth(app);
-    let currentUid = "", currentUsername = "", partnerUid = "", currentChatId = "", SESSION_KEY = "";
+    let currentUid = "", currentUsername = "", partnerUid = "", currentChatId = "", appState = "HOME", SESSION_KEY = "";
 
-    // FIXED: Unified Security Math
-    const SALT = "STATION_V50_FINAL";
+    // SECURITY BLOCK
+    const SALT = "STATION_V51_REDUX";
     const deriveKey = (p) => CryptoJS.SHA256(p + SALT).toString();
     const encrypt = (v) => CryptoJS.AES.encrypt(v, SESSION_KEY).toString();
     const decrypt = (c) => { try { return CryptoJS.AES.decrypt(c, SESSION_KEY).toString(CryptoJS.enc.Utf8); } catch(e) { return "[ENC]"; } };
@@ -99,19 +101,12 @@
         const u = document.getElementById('auth-user').value.trim();
         const p = document.getElementById('auth-pass').value.trim();
         if(!u || !p) return;
-        
         SESSION_KEY = deriveKey(p);
         const loginHash = CryptoJS.SHA256(SESSION_KEY).toString();
         const snap = await get(ref(db, `users/${u}`));
-        
-        if(snap.exists() && snap.val().password !== loginHash) {
-            showStatus("STATION_LOCKED_WRONG_KEY");
-            return;
-        }
-        
+        if(snap.exists() && snap.val().password !== loginHash) return;
         const uid = snap.exists() ? snap.val().uid : auth.currentUser.uid;
         if(!snap.exists()) await set(ref(db, `users/${u}`), { uid: uid, password: loginHash, name: u });
-        
         localStorage.setItem('rt_session', JSON.stringify({u, uid, k: SESSION_KEY}));
         location.reload();
     };
@@ -119,26 +114,21 @@
     onAuthStateChanged(auth, (user) => { 
         if (!user) signInAnonymously(auth);
         const saved = localStorage.getItem('rt_session');
-        if (saved) {
-            const d = JSON.parse(saved);
-            SESSION_KEY = d.k;
-            currentUsername = d.u;
-            currentUid = d.uid;
-            unlockUI();
-        }
+        if (saved) { const d = JSON.parse(saved); SESSION_KEY = d.k; login(d.u, d.uid); }
     });
 
-    function unlockUI() {
+    function login(u, uid) {
+        currentUsername = u; currentUid = uid;
         document.getElementById('auth-gate').style.display = 'none';
         document.getElementById('main-view').style.display = 'grid';
-        document.getElementById('user-display').innerText = currentUsername;
+        document.getElementById('user-display').innerText = u;
         onValue(ref(db, ".info/connected"), (s) => {
-            if (s.val()) { set(ref(db, `status/${currentUid}`), { state: "online" }); onDisconnect(ref(db, `status/${currentUid}`)).set({ state: "offline" }); }
+            if (s.val()) { set(ref(db, `status/${uid}`), { state: "online" }); onDisconnect(ref(db, `status/${uid}`)).set({ state: "offline" }); }
         });
         listenFriends(); listenRequests();
     }
 
-    // FIXED: Search Engine Correction
+    // FIXED: Search Engine
     window.sendFriendRequest = async () => {
         const target = document.getElementById('target-user').value.trim();
         if(!target || target === currentUsername) return;
@@ -161,11 +151,13 @@
         });
     }
 
-    // FIXED: Double-Sided Relationship Handshake
+    // FIXED: Multi-Path Handshake Bond
     window.acceptFriend = async (name, uid) => {
-        await set(ref(db, `friends/${currentUid}/${uid}`), { name: name });
-        await set(ref(db, `friends/${uid}/${currentUid}`), { name: currentUsername });
-        await remove(ref(db, `requests/${currentUid}/${uid}`));
+        const updates = {};
+        updates[`friends/${currentUid}/${uid}`] = { name: name };
+        updates[`friends/${uid}/${currentUid}`] = { name: currentUsername };
+        updates[`requests/${currentUid}/${uid}`] = null; // Removes request instantly
+        await update(ref(db), updates);
     };
 
     function listenFriends() {
@@ -175,7 +167,7 @@
                 const f = c.val();
                 const d = document.createElement('div');
                 d.className = 'friend-circle';
-                d.innerHTML = `<span>${f.name.substring(0,2).toUpperCase()}</span><div id="dot-${c.key}" class="status-dot"></div>`;
+                d.innerHTML = `<span>${f.name.substring(0,2)}</span><div id="dot-${c.key}" class="status-dot"></div>`;
                 d.onclick = () => openChat(f.name, c.key);
                 l.appendChild(d);
                 onValue(ref(db, `status/${c.key}`), (st) => {
@@ -187,7 +179,7 @@
     }
 
     function openChat(name, uid) {
-        partnerUid = uid;
+        partnerUid = uid; appState = "CHAT";
         document.getElementById('init-screen').style.display = 'none';
         document.getElementById('chat-window').style.display = 'flex';
         document.getElementById('chat-header-identity').innerText = `USER: ${name}`;
@@ -225,9 +217,9 @@
         }; r.readAsDataURL(i.files[0]);
     };
 
-    window.openMedia = (u) => { document.getElementById('overlay-img').src = u; document.getElementById('media-overlay').style.display = 'flex'; };
-    window.closeMedia = () => { document.getElementById('media-overlay').style.display = 'none'; };
-    window.exitChat = () => { document.getElementById('chat-window').style.display = 'none'; document.getElementById('init-screen').style.display = 'block'; partnerUid=""; };
+    window.openMedia = (u) => { appState = "PHOTO"; document.getElementById('overlay-img').src = u; document.getElementById('media-overlay').style.display = 'flex'; };
+    window.closeMedia = () => { appState = "CHAT"; document.getElementById('media-overlay').style.display = 'none'; };
+    window.exitChat = () => { appState = "HOME"; document.getElementById('chat-window').style.display = 'none'; document.getElementById('init-screen').style.display = 'block'; partnerUid=""; };
     window.logout = () => { localStorage.clear(); location.reload(); };
 
     window.mutualDestruct = async () => {
