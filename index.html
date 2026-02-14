@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>PRIVATE_MSG</title>
+    <title>PRIVATE_MSG // MASTER_V45</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
-    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 
     <style>
         :root { --pink: #ff0055; --blue: #00f2ff; --bg: #050505; --green: #00ff00; --grey: #444; }
@@ -18,7 +17,7 @@
 
         .os-container { display: none; height: 100vh; grid-template-columns: 85px 1fr; border: 4px solid var(--pink); box-sizing: border-box; background: rgba(0,0,0,0.85); }
         .sidebar { border-right: 2px solid var(--pink); display: flex; flex-direction: column; padding: 5px; height: 100%; background: rgba(0,0,0,0.9); }
-        .friend-circle { width: 55px; height: 55px; border: 2px solid var(--blue); border-radius: 50%; margin: 15px auto; display: flex; align-items: center; justify-content: center; position: relative; cursor: pointer; font-weight: bold; color: var(--blue); }
+        .friend-circle { width: 55px; height: 55px; border: 2px solid var(--blue); border-radius: 50%; margin: 15px auto; display: flex; align-items: center; justify-content: center; position: relative; cursor: pointer; font-weight: bold; color: var(--blue); font-size: 14px; text-transform: uppercase; }
         .status-dot { position: absolute; bottom: 2px; right: 2px; width: 14px; height: 14px; border-radius: 50%; border: 2px solid #000; }
         .online { background: var(--green); box-shadow: 0 0 10px var(--green); }
 
@@ -31,7 +30,6 @@
         .msg.them { align-self: flex-start; border-color: var(--pink); color: var(--pink); background: rgba(255,0,85,0.05); }
         
         .unsend-btn { position: absolute; right: -25px; top: 50%; transform: translateY(-50%); color: red; font-weight: bold; cursor: pointer; font-size: 14px; padding: 5px; opacity: 0.4; }
-        .media-box { max-width: 100%; border-radius: 8px; margin-top: 8px; cursor: zoom-in; }
         .input-dock { position: absolute; bottom: 0; left: 0; width: 100%; display: flex; align-items: center; border-top: 2px solid var(--blue); background: #000; padding: 12px; box-sizing: border-box; }
         .cyber-btn { background: transparent; color: var(--pink); border: 2px solid var(--pink); padding: 8px 12px; font-weight: bold; cursor: pointer; font-size: 10px; text-transform: uppercase; }
     </style>
@@ -44,7 +42,7 @@
 </div>
 
 <div id="auth-gate" style="position:fixed; top:0; left:0; width:100%; height:100%; background:#000; z-index:5000; display:flex; flex-direction:column; align-items:center; justify-content:center;">
-    <h2 style="color: var(--pink); letter-spacing: 5px;">private msg</h2>
+    <h2 style="color: var(--pink); letter-spacing: 5px;">STATION_V45</h2>
     <input type="text" id="auth-user" placeholder="SECURE_ID" style="background:#000; border:1px solid var(--blue); color:#fff; padding:15px; width: 250px; margin-bottom: 10px;">
     <input type="password" id="auth-pass" placeholder="SECRET_KEY" style="background:#000; border:1px solid var(--blue); color:#fff; padding:15px; width: 250px; margin-bottom: 20px;">
     <button class="cyber-btn" onclick="handleAuth()" style="width: 250px;">INITIALIZE</button>
@@ -54,15 +52,15 @@
     <div class="sidebar" id="friends-list"></div>
     <div class="main-view" style="display:flex; flex-direction:column; height:100%; overflow:hidden;">
         <div id="init-screen" style="padding:20px;">
-            <div style="font-size:10px; color:var(--pink); margin-bottom:20px;">ACTIVE: <span id="user-display">---</span></div>
+            <div style="font-size:10px; color:var(--pink); margin-bottom:20px;">STATION: <span id="user-display">---</span></div>
             <input type="text" id="target-user" placeholder="SEARCH_ID..." style="border-bottom:2px solid var(--blue); width:100%; background:transparent; color:var(--blue); padding:10px;">
             <button class="cyber-btn" onclick="sendFriendRequest()" style="width:100%; margin-top:15px;">SEND REQUEST</button>
             <div id="req-list" style="margin-top:30px;"></div>
-            <button class="cyber-btn" onclick="logout()" style="margin-top:auto; width:100%; border-color:#fff; color:#fff;">LOGOUT</button>
+            <button class="cyber-btn" onclick="logout()" style="margin-top:auto; width:100%;">LOGOUT</button>
         </div>
         <div id="chat-window">
             <div id="chat-header-identity">USER: ---</div>
-            <div style="display:flex; justify-content:space-around; padding:12px; border-bottom:1px solid var(--blue); background:rgba(0,0,0,0.5);">
+            <div style="display:flex; justify-content:space-around; padding:12px; border-bottom:1px solid var(--blue);">
                 <button class="cyber-btn" style="color:yellow; border-color:yellow;" onclick="mutualDestruct()">DESTROY_CHAT</button>
                 <button class="cyber-btn" onclick="exitChat()">BACK</button>
             </div>
@@ -88,9 +86,9 @@
     const auth = getAuth(app);
     let currentUid = "", currentUsername = "", partnerUid = "", currentChatId = "", appState = "HOME", SESSION_KEY = "";
 
-    const deriveKey = (p) => CryptoJS.SHA256(p + "STATION_SALT_V44").toString();
+    const deriveKey = (p) => CryptoJS.SHA256(p + "SALT_V45").toString();
     const encrypt = (v) => CryptoJS.AES.encrypt(v, SESSION_KEY).toString();
-    const decrypt = (c) => { try { return CryptoJS.AES.decrypt(c, SESSION_KEY).toString(CryptoJS.enc.Utf8); } catch(e) { return "[ENCRYPTED]"; } };
+    const decrypt = (c) => { try { return CryptoJS.AES.decrypt(c, SESSION_KEY).toString(CryptoJS.enc.Utf8); } catch(e) { return "[ENC]"; } };
 
     window.handleAuth = async () => {
         const u = document.getElementById('auth-user').value.trim();
@@ -101,7 +99,7 @@
         const snap = await get(ref(db, `users/${u}`));
         if(snap.exists() && snap.val().password !== hashedPass) return alert("AUTH_ERROR");
         const uid = snap.exists() ? snap.val().uid : auth.currentUser.uid;
-        if(!snap.exists()) await set(ref(db, `users/${u}`), { uid, password: hashedPass, rawName: u });
+        if(!snap.exists()) await set(ref(db, `users/${u}`), { uid, password: hashedPass, name: u });
         localStorage.setItem('rt_session', JSON.stringify({u, uid, k: SESSION_KEY}));
         location.reload();
     };
@@ -123,11 +121,59 @@
         listenFriends(); listenRequests();
     }
 
+    // RESTORED: Stable Relationship Handshake
+    window.sendFriendRequest = async () => {
+        const target = document.getElementById('target-user').value.trim();
+        if(!target || target === currentUsername) return;
+        const snap = await get(ref(db, `users/${target}`));
+        if (snap.exists()) {
+            await set(ref(db, `requests/${snap.val().uid}/${currentUid}`), { from: currentUsername, fromUid: currentUid });
+            alert("REQUEST SENT");
+        } else { alert("STATION NOT FOUND"); }
+    };
+
+    function listenRequests() {
+        onValue(ref(db, `requests/${currentUid}`), (s) => {
+            const l = document.getElementById('req-list'); l.innerHTML = '';
+            s.forEach((c) => {
+                const d = c.val();
+                const div = document.createElement('div');
+                div.innerHTML = `<div style="font-size:10px; margin-bottom:10px;">REQ: ${d.from} <button class="cyber-btn" onclick="acceptFriend('${d.from}','${d.fromUid}')">ACCEPT</button></div>`;
+                l.appendChild(div);
+            });
+        });
+    }
+
+    window.acceptFriend = async (name, uid) => {
+        // Create mutual friendship bonds
+        await set(ref(db, `friends/${currentUid}/${uid}`), { name: name });
+        await set(ref(db, `friends/${uid}/${currentUid}`), { name: currentUsername });
+        await remove(ref(db, `requests/${currentUid}/${uid}`));
+        alert("STATION LINKED");
+    };
+
+    function listenFriends() {
+        onValue(ref(db, `friends/${currentUid}`), (s) => {
+            const l = document.getElementById('friends-list'); l.innerHTML = '';
+            s.forEach((c) => {
+                const f = c.val();
+                const d = document.createElement('div');
+                d.className = 'friend-circle';
+                d.innerHTML = `<span>${f.name.substring(0,2)}</span><div id="dot-${c.key}" class="status-dot"></div>`;
+                d.onclick = () => openChat(f.name, c.key);
+                l.appendChild(d);
+                onValue(ref(db, `status/${c.key}`), (st) => {
+                    const dot = document.getElementById(`dot-${c.key}`);
+                    if(dot) dot.className = `status-dot ${st.val()?.state === 'online' ? 'online' : ''}`;
+                });
+            });
+        });
+    }
+
     function openChat(name, uid) {
         partnerUid = uid; appState = "CHAT";
         document.getElementById('init-screen').style.display = 'none';
         document.getElementById('chat-window').style.display = 'flex';
-        // Case Sensitive Identity Header
         document.getElementById('chat-header-identity').innerText = `USER: ${name}`;
         currentChatId = currentUid < uid ? `${currentUid}_${uid}` : `${uid}_${currentUid}`;
         off(ref(db, `chats/${currentChatId}`));
@@ -141,8 +187,7 @@
                 let content = `<div>${clear}</div>`;
                 if(d.media) {
                     let m = decrypt(d.media);
-                    if(d.mType === 'IMG') content += `<img src="${m}" class="media-box" onclick="openMedia('${m}')">`;
-                    else content += `<video src="${m}" class="media-box" controls></video>`;
+                    content += `<img src="${m}" class="media-box" onclick="openMedia('${m}')">`;
                 }
                 let unsend = d.sender === currentUid ? `<span class="unsend-btn" onclick="removeMsg('${c.key}')">✖</span>` : '';
                 div.innerHTML = unsend + content; box.appendChild(div);
@@ -160,20 +205,8 @@
 
     window.uploadMedia = (i) => {
         const r = new FileReader(); r.onload = (e) => {
-            let type = i.files[0].type.startsWith('image') ? 'IMG' : 'VID';
-            push(ref(db, `chats/${currentChatId}`), { sender: currentUid, text: encrypt(`[MEDIA]`), media: encrypt(e.target.result), mType: type });
+            push(ref(db, `chats/${currentChatId}`), { sender: currentUid, text: encrypt(`[MEDIA]`), media: encrypt(e.target.result) });
         }; r.readAsDataURL(i.files[0]);
-    };
-
-    // Fix: Send Friend Request Logic
-    window.sendFriendRequest = async () => {
-        const target = document.getElementById('target-user').value.trim();
-        if(!target) return;
-        const snap = await get(ref(db, 'users/' + target));
-        if (snap.exists()) {
-            await set(ref(db, `requests/${snap.val().uid}/${currentUid}`), { from: currentUsername, fromUid: currentUid });
-            alert("REQUEST SENT");
-        } else { alert("STATION NOT FOUND"); }
     };
 
     window.openMedia = (u) => { appState = "PHOTO"; document.getElementById('overlay-img').src = u; document.getElementById('media-overlay').style.display = 'flex'; };
@@ -181,10 +214,6 @@
     window.exitChat = () => { appState = "HOME"; document.getElementById('chat-window').style.display = 'none'; document.getElementById('init-screen').style.display = 'block'; };
     window.logout = () => { localStorage.clear(); location.reload(); };
 
-    function listenFriends() { onValue(ref(db, `friends/${currentUid}`), (s) => { const l = document.getElementById('friends-list'); l.innerHTML = ''; s.forEach((c) => { const f = c.val(); const d = document.createElement('div'); d.className = 'friend-circle'; d.innerHTML = `<span>${f.name.substring(0,2)}</span><div id="dot-${c.key}" class="status-dot"></div>`; d.onclick = () => openChat(f.name, c.key); l.appendChild(d); onValue(ref(db, `status/${c.key}`), (st) => { const dot = document.getElementById(`dot-${c.key}`); if(dot) dot.className = `status-dot ${st.val()?.state === 'online' ? 'online' : ''}`; }); }); }); }
-    function listenRequests() { onValue(ref(db, `requests/${currentUid}`), (s) => { const l = document.getElementById('req-list'); l.innerHTML = ''; s.forEach((c) => { const d = document.createElement('div'); d.innerHTML = `<div style="font-size:10px; margin-bottom:10px;">REQ: ${c.val().from} <button class="cyber-btn" onclick="acceptFriend('${c.val().from}','${c.val().fromUid}')">ACCEPT</button></div>`; l.appendChild(d); }); }); }
-    window.acceptFriend = async (n, u) => { await set(ref(db, `friends/${currentUid}/${u}`), { name: n }); await set(ref(db, `friends/${u}/${currentUid}`), { name: currentUsername }); remove(ref(db, `requests/${currentUid}/${u}`)); };
-    
     window.mutualDestruct = async () => {
         const cid = currentChatId;
         await set(ref(db, `destruct/${cid}/${currentUid}`), true);
