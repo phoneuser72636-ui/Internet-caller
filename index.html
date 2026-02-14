@@ -3,65 +3,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>PRIVATE_MSG // HARDENED_V42</title>
+    <title>PRIVATE_MSG // MASTER_V43</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+
     <style>
         :root { --pink: #ff0055; --blue: #00f2ff; --bg: #050505; --green: #00ff00; --grey: #444; }
-        body { background: #000; color: #fff; font-family: 'Courier New', monospace; margin: 0; overflow: hidden; height: 100vh; }
+        body { background: #000 url('https://wallpaperaccess.com/full/1324706.jpg') no-repeat center center fixed; background-size: cover; color: #fff; font-family: 'Courier New', monospace; margin: 0; overflow: hidden; height: 100vh; }
         
-        /* Media Viewer Overlay */
         #media-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.98); z-index: 7000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(20px); }
         #overlay-img { max-width: 95%; max-height: 90%; transition: transform 0.2s; cursor: grab; }
-        .close-media-btn { position: absolute; top: 20px; right: 20px; font-size: 30px; color: var(--pink); cursor: pointer; z-index: 7001; }
 
         .os-container { display: none; height: 100vh; grid-template-columns: 85px 1fr; border: 4px solid var(--pink); box-sizing: border-box; background: rgba(0,0,0,0.85); }
-        .sidebar { border-right: 2px solid var(--pink); display: flex; flex-direction: column; padding: 5px; height: 100%; }
+        .sidebar { border-right: 2px solid var(--pink); display: flex; flex-direction: column; padding: 5px; height: 100%; background: rgba(0,0,0,0.9); }
         .friend-circle { width: 55px; height: 55px; border: 2px solid var(--blue); border-radius: 50%; margin: 15px auto; display: flex; align-items: center; justify-content: center; position: relative; cursor: pointer; font-weight: bold; color: var(--blue); }
         .status-dot { position: absolute; bottom: 2px; right: 2px; width: 14px; height: 14px; border-radius: 50%; border: 2px solid #000; }
         .online { background: var(--green); box-shadow: 0 0 10px var(--green); }
 
         #chat-window { flex: 1; display: none; flex-direction: column; height: 100%; position: relative; }
         #messages { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; padding-bottom: 140px; }
+        
+        /* Fixed Identity Header */
         #chat-header-identity { background: rgba(0, 242, 255, 0.15); border-bottom: 1px solid var(--blue); padding: 12px; text-align: center; font-size: 11px; color: var(--blue); letter-spacing: 2px; font-weight: bold; }
 
         .msg { margin-bottom: 18px; padding: 12px; border-radius: 12px; max-width: 80%; position: relative; line-height: 1.4; border: 1px solid transparent; }
-        .msg.me { align-self: flex-end; border-color: var(--blue); color: var(--blue); background: rgba(0,242,255,0.05); }
+        .msg.me { align-self: flex-end; border-color: var(--blue); color: var(--blue); background: rgba(0,242,255,0.05); margin-right: 15px; }
         .msg.them { align-self: flex-start; border-color: var(--pink); color: var(--pink); background: rgba(255,0,85,0.05); }
         
         .unsend-btn { position: absolute; right: -25px; top: 50%; transform: translateY(-50%); color: red; font-weight: bold; cursor: pointer; font-size: 14px; padding: 5px; opacity: 0.4; }
         .media-box { max-width: 100%; border-radius: 8px; margin-top: 8px; cursor: zoom-in; }
         .input-dock { position: absolute; bottom: 0; left: 0; width: 100%; display: flex; align-items: center; border-top: 2px solid var(--blue); background: #000; padding: 12px; box-sizing: border-box; }
-        .cyber-btn { background: transparent; color: var(--pink); border: 2px solid var(--pink); padding: 8px 12px; font-weight: bold; cursor: pointer; font-size: 10px; }
+        .cyber-btn { background: transparent; color: var(--pink); border: 2px solid var(--pink); padding: 8px 12px; font-weight: bold; cursor: pointer; font-size: 10px; text-transform: uppercase; }
     </style>
 </head>
 <body>
 
-<div id="media-overlay">
-    <div class="close-media-btn" onclick="closeMedia()">×</div>
+<div id="media-overlay" onclick="closeMedia()">
     <img id="overlay-img" src="">
 </div>
 
 <div id="auth-gate" style="position:fixed; top:0; left:0; width:100%; height:100%; background:#000; z-index:5000; display:flex; flex-direction:column; align-items:center; justify-content:center;">
-    <h2 style="color: var(--pink); letter-spacing: 5px;">secure login</h2>
+    <h2 style="color: var(--pink); letter-spacing: 5px;">STATION_V43</h2>
     <input type="text" id="auth-user" placeholder="SECURE_ID" style="background:#000; border:1px solid var(--blue); color:#fff; padding:15px; width:250px; margin-bottom:10px;">
     <input type="password" id="auth-pass" placeholder="SECRET_KEY" style="background:#000; border:1px solid var(--blue); color:#fff; padding:15px; width:250px; margin-bottom:20px;">
-    <button class="cyber-btn" onclick="handleAuth()" style="width:250px;">INITIALIZE_DECRYPTION</button>
+    <button class="cyber-btn" onclick="handleAuth()" style="width:250px;">INITIALIZE</button>
 </div>
 
 <div class="os-container" id="main-view">
     <div class="sidebar" id="friends-list"></div>
     <div class="main-view" style="display:flex; flex-direction:column; height:100%; overflow:hidden;">
         <div id="init-screen" style="padding:20px;">
-            <div style="font-size:10px; color:var(--pink); margin-bottom:20px;">TERMINAL: <span id="user-display">---</span></div>
-            <input type="text" id="target-user" placeholder="SEARCH_ID..." style="border-bottom:2px solid var(--blue); width:100%; background:transparent; color:var(--blue); padding:10px;">
-            <button class="cyber-btn" onclick="sendFriendRequest()" style="width:100%; margin-top:15px;">LINK_FRIEND</button>
+            <div style="font-size:10px; color:var(--pink); margin-bottom:20px;">STATION: <span id="user-display">---</span></div>
+            <input type="text" id="target-user" placeholder="TARGET_ID..." style="border-bottom:2px solid var(--blue); width:100%; background:transparent; color:var(--blue); padding:10px;">
+            <button class="cyber-btn" onclick="sendFriendRequest()" style="width:100%; margin-top:15px;">SEND REQUEST</button>
             <div id="req-list" style="margin-top:30px;"></div>
-            <button class="cyber-btn" onclick="logout()" style="margin-top:30px; width:100%;">LOGOUT</button>
+            <button class="cyber-btn" onclick="logout()" style="margin-top:auto; width:100%; border-color:#fff; color:#fff;">LOGOUT</button>
         </div>
         <div id="chat-window">
             <div id="chat-header-identity">USER: ---</div>
-            <div style="display:flex; justify-content:space-around; padding:12px; border-bottom:1px solid var(--blue);">
+            <div style="display:flex; justify-content:space-around; padding:12px; border-bottom:1px solid var(--blue); background:rgba(0,0,0,0.5);">
                 <button class="cyber-btn" style="color:yellow; border-color:yellow;" onclick="mutualDestruct()">DESTROY_CHAT</button>
                 <button class="cyber-btn" onclick="exitChat()">BACK</button>
             </div>
@@ -85,36 +86,22 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
     const auth = getAuth(app);
-    let currentUid = "", currentUsername = "", partnerUid = "", currentChatId = "", appState = "HOME";
+    let currentUid = "", currentUsername = "", partnerUid = "", currentChatId = "", appState = "HOME", SESSION_KEY = "";
 
-    // 1) DEEP SECURITY: Dynamic Key Derivation
-    // We no longer use a static salt alone. We derive a key from the user's password.
-    let SESSION_KEY = "";
-    const deriveKey = (pass) => CryptoJS.SHA256(pass + "STATION_KNOX_V42_PRO").toString();
-
-    // 3) DEEP SECURITY: Input Sanitization
-    const sanitize = (text) => {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    };
-
-    const encrypt = (val) => CryptoJS.AES.encrypt(val, SESSION_KEY).toString();
-    const decrypt = (cipher) => { try { return CryptoJS.AES.decrypt(cipher, SESSION_KEY).toString(CryptoJS.enc.Utf8); } catch(e) { return "[CORRUPT_PACKET]"; } };
+    const deriveKey = (p) => CryptoJS.SHA256(p + "STATION_KNOX_V43").toString();
+    const encrypt = (v) => CryptoJS.AES.encrypt(v, SESSION_KEY).toString();
+    const decrypt = (c) => { try { return CryptoJS.AES.decrypt(c, SESSION_KEY).toString(CryptoJS.enc.Utf8); } catch(e) { return "[ENC_DATA]"; } };
 
     window.handleAuth = async () => {
-        const u = document.getElementById('auth-user').value.toLowerCase().trim();
+        const u = document.getElementById('auth-user').value.trim(); // Removed lowercase
         const p = document.getElementById('auth-pass').value.trim();
         if(!u || !p) return;
-        
-        SESSION_KEY = deriveKey(p); // Key generated only in local memory
+        SESSION_KEY = deriveKey(p);
         const hashedPass = CryptoJS.SHA256(SESSION_KEY).toString();
         const snap = await get(ref(db, `users/${u}`));
-        
-        if(snap.exists() && snap.val().password !== hashedPass) return alert("UNAUTHORIZED");
+        if(snap.exists() && snap.val().password !== hashedPass) return alert("AUTH_FAIL");
         const uid = snap.exists() ? snap.val().uid : auth.currentUser.uid;
-        if(!snap.exists()) await set(ref(db, `users/${u}`), { uid, password: hashedPass });
-        
+        if(!snap.exists()) await set(ref(db, `users/${u}`), { uid, password: hashedPass, originalName: u });
         localStorage.setItem('rt_session', JSON.stringify({u, uid, k: SESSION_KEY}));
         location.reload();
     };
@@ -122,46 +109,43 @@
     onAuthStateChanged(auth, async (user) => { 
         if (!user) await signInAnonymously(auth);
         const saved = localStorage.getItem('rt_session');
-        if (saved) {
-            const d = JSON.parse(saved);
-            SESSION_KEY = d.k; // Recover temporary key
-            login(d.u, d.uid);
-        }
+        if (saved) { const d = JSON.parse(saved); SESSION_KEY = d.k; login(d.u, d.uid); }
     });
 
     function login(u, uid) {
         currentUsername = u; currentUid = uid;
         document.getElementById('auth-gate').style.display = 'none';
         document.getElementById('main-view').style.display = 'grid';
-        document.getElementById('user-display').innerText = u.toUpperCase();
+        document.getElementById('user-display').innerText = u; // Raw Casing
+        onValue(ref(db, ".info/connected"), (s) => {
+            if (s.val()) { set(ref(db, `status/${uid}`), { state: "online" }); onDisconnect(ref(db, `status/${uid}`)).set({ state: "offline" }); }
+        });
         listenFriends(); listenRequests();
     }
 
     function openChat(name, uid) {
         partnerUid = uid; appState = "CHAT";
-        document.getElementById('init-screen').style.display = 'none'; document.getElementById('chat-window').style.display = 'flex';
-        document.getElementById('chat-header-identity').innerText = `USER: ${name.toUpperCase()}`;
+        document.getElementById('init-screen').style.display = 'none';
+        document.getElementById('chat-window').style.display = 'flex';
+        // Identity Header with Raw Casing
+        document.getElementById('chat-header-identity').innerText = `USER: ${name}`;
         currentChatId = currentUid < uid ? `${currentUid}_${uid}` : `${uid}_${currentUid}`;
-        
         off(ref(db, `chats/${currentChatId}`));
-        onValue(ref(db, `chats/${currentChatId}`), (snapshot) => {
+        onValue(ref(db, `chats/${currentChatId}`), (snap) => {
             const box = document.getElementById('messages'); box.innerHTML = '';
-            snapshot.forEach((child) => {
-                const d = child.val();
+            snap.forEach((c) => {
+                const d = c.val();
                 const div = document.createElement('div');
                 div.className = d.sender === currentUid ? 'msg me' : 'msg them';
-                
-                let unsend = d.sender === currentUid ? `<span class="unsend-btn" onclick="removeMsg('${child.key}')">✖</span>` : '';
-                // 3) DEEP SECURITY: Decrypt THEN Sanitize to prevent XSS injection
-                let clearText = sanitize(decrypt(d.text));
-                let content = `<div>${clearText}</div>`;
-                
+                let clear = decrypt(d.text);
+                let content = `<div>${clear}</div>`;
                 if(d.media) {
-                    let clearMedia = decrypt(d.media);
-                    content += `<img src="${clearMedia}" class="media-box" onclick="openMedia('${clearMedia}')">`;
+                    let m = decrypt(d.media);
+                    if(d.mType === 'IMG') content += `<img src="${m}" class="media-box" onclick="openMedia('${m}')">`;
+                    else content += `<video src="${m}" class="media-box" controls></video>`;
                 }
-                div.innerHTML = unsend + content;
-                box.appendChild(div);
+                let unsend = d.sender === currentUid ? `<span class="unsend-btn" onclick="removeMsg('${c.key}')">✖</span>` : '';
+                div.innerHTML = unsend + content; box.appendChild(div);
             });
             box.scrollTop = box.scrollHeight;
         });
@@ -173,21 +157,43 @@
         push(ref(db, `chats/${currentChatId}`), { sender: currentUid, text: encrypt(t) });
         document.getElementById('msg-input').value = '';
     };
+
     window.uploadMedia = (i) => {
         const r = new FileReader(); r.onload = (e) => {
-            push(ref(db, `chats/${currentChatId}`), { sender: currentUid, text: encrypt(`[MEDIA]`), media: encrypt(e.target.result) });
+            let type = i.files[0].type.startsWith('image') ? 'IMG' : 'VID';
+            push(ref(db, `chats/${currentChatId}`), { sender: currentUid, text: encrypt(`[MEDIA]`), media: encrypt(e.target.result), mType: type });
         }; r.readAsDataURL(i.files[0]);
     };
 
-    window.openMedia = (url) => { appState = "PHOTO"; document.getElementById('overlay-img').src = url; document.getElementById('media-overlay').style.display = 'flex'; };
+    // Fix: Send Request Logic
+    window.sendFriendRequest = async () => {
+        const t = document.getElementById('target-user').value.trim();
+        if(!t) return;
+        const snap = await get(ref(db, `users/${t}`));
+        if(snap.exists()){
+            await set(ref(db, `requests/${snap.val().uid}/${currentUid}`), { from: currentUsername, fromUid: currentUid });
+            alert("REQUEST SENT");
+        } else { alert("STATION NOT FOUND"); }
+    };
+
+    window.openMedia = (u) => { appState = "PHOTO"; document.getElementById('overlay-img').src = u; document.getElementById('media-overlay').style.display = 'flex'; };
     window.closeMedia = () => { appState = "CHAT"; document.getElementById('media-overlay').style.display = 'none'; };
     window.exitChat = () => { appState = "HOME"; document.getElementById('chat-window').style.display = 'none'; document.getElementById('init-screen').style.display = 'block'; };
     window.logout = () => { localStorage.clear(); location.reload(); };
 
-    function listenFriends() { onValue(ref(db, `friends/${currentUid}`), (snap) => { const list = document.getElementById('friends-list'); list.innerHTML = ''; snap.forEach((child) => { const f = child.val(); const div = document.createElement('div'); div.className = 'friend-circle'; div.innerHTML = `<span>${f.name.substring(0,2).toUpperCase()}</span><div id="dot-${child.key}" class="status-dot"></div>`; div.onclick = () => openChat(f.name, child.key); list.appendChild(div); }); }); }
-    function listenRequests() { onValue(ref(db, `requests/${currentUid}`), (snap) => { const list = document.getElementById('req-list'); list.innerHTML = ''; snap.forEach((child) => { const div = document.createElement('div'); div.innerHTML = `<div style="font-size:11px; margin-bottom:10px;">REQ: ${child.val().from} <button class="cyber-btn" onclick="acceptFriend('${child.val().from}','${child.val().fromUid}')">ACCEPT</button></div>`; list.appendChild(div); }); }); }
+    function listenFriends() { onValue(ref(db, `friends/${currentUid}`), (s) => { const l = document.getElementById('friends-list'); l.innerHTML = ''; s.forEach((c) => { const f = c.val(); const d = document.createElement('div'); d.className = 'friend-circle'; d.innerHTML = `<span>${f.name.substring(0,2)}</span><div id="dot-${c.key}" class="status-dot"></div>`; d.onclick = () => openChat(f.name, c.key); l.appendChild(d); onValue(ref(db, `status/${c.key}`), (st) => { const dot = document.getElementById(`dot-${c.key}`); if(dot) dot.className = `status-dot ${st.val()?.state === 'online' ? 'online' : ''}`; }); }); }); }
+    function listenRequests() { onValue(ref(db, `requests/${currentUid}`), (s) => { const l = document.getElementById('req-list'); l.innerHTML = ''; s.forEach((c) => { const d = document.createElement('div'); d.innerHTML = `<div style="font-size:10px; margin-bottom:10px;">REQ: ${c.val().from} <button class="cyber-btn" onclick="acceptFriend('${c.val().from}','${c.val().fromUid}')">ACCEPT</button></div>`; l.appendChild(d); }); }); }
     window.acceptFriend = async (n, u) => { await set(ref(db, `friends/${currentUid}/${u}`), { name: n }); await set(ref(db, `friends/${u}/${currentUid}`), { name: currentUsername }); remove(ref(db, `requests/${currentUid}/${u}`)); };
-    window.sendFriendRequest = async () => { const t = document.getElementById('target-user').value.toLowerCase().trim(); const snap = await get(ref(db, `users/${t}`)); if(snap.exists()){ set(ref(db, `requests/${snap.val().uid}/${currentUid}`), { from: currentUsername, fromUid: currentUid }); } };
+    
+    window.mutualDestruct = async () => {
+        const cid = currentChatId;
+        await set(ref(db, `destruct/${cid}/${currentUid}`), true);
+        onValue(ref(db, `destruct/${cid}`), (s) => {
+            if (s.exists() && Object.keys(s.val()).length >= 2) {
+                remove(ref(db, `chats/${cid}`)); remove(ref(db, `destruct/${cid}`)); exitChat();
+            }
+        });
+    };
 </script>
 </body>
 </html>
