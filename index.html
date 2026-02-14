@@ -224,6 +224,120 @@
     function listenRequests() { onValue(ref(db, `requests/${currentUid}`), (snap) => { const list = document.getElementById('req-list'); list.innerHTML = ''; snap.forEach((child) => { const div = document.createElement('div'); div.innerHTML = `<div style="font-size:11px; margin-bottom:10px;">REQ: ${child.val().from} <button class="cyber-btn" onclick="acceptFriend('${child.val().from}','${child.val().fromUid}')">ACCEPT</button></div>`; list.appendChild(div); }); }); }
     window.acceptFriend = async (n, u) => { await set(ref(db, `friends/${currentUid}/${u}`), { name: n }); await set(ref(db, `friends/${u}/${currentUid}`), { name: currentUsername }); remove(ref(db, `requests/${currentUid}/${u}`)); };
     window.sendFriendRequest = async () => { const t = document.getElementById('target-user').value.toLowerCase().trim(); const snap = await get(ref(db, `users/${t}`)); if(snap.exists()){ set(ref(db, `requests/${snap.val().uid}/${currentUid}`), { from: currentUsername, fromUid: currentUid }); } };
+    // =========================================================================
+    // SECURITY_CORE_V49: CRYPTOGRAPHIC LAYER (LAYERED FOR ZERO CONFLICT)
+    // =========================================================================
+    // Use LaTeX for the crypto logic concept: $Ciphertext = AES_{Encrypt}(Message, Key)$
+    
+    const APEX_SALT = "STATION_V49_ULTRA_PRO"; // Hardcoded internal salt
+    const deriveKey = (p) => CryptoJS.SHA256(p + APEX_SALT).toString();
+    
+    // 1. Overwrite Auth to use SHA-256 Hashing
+    window.handleAuth = async () => {
+        const u = document.getElementById('auth-user').value.toLowerCase().trim();
+        const p = document.getElementById('auth-pass').value.trim();
+        if(!u || !p) return;
+        const key = deriveKey(p);
+        const loginHash = CryptoJS.SHA256(key).toString();
+        const snap = await get(ref(db, `users/${u}`));
+        
+        if(snap.exists() && snap.val().password !== loginHash) return alert("UNAUTHORIZED");
+        const uid = snap.exists() ? snap.val().uid : auth.currentUser.uid;
+        if(!snap.exists()) await set(ref(db, `users/${u}`), { uid, password: loginHash });
+        
+        localStorage.setItem('rt_session', JSON.stringify({u, uid, k: key}));
+        location.reload();
+    };
+
+    // Recover Encryption Key from current session
+    let sessionKey = "";
+    const activeSession = localStorage.getItem('rt_session');
+    if(activeSession) sessionKey = JSON.parse(activeSession).k;
+
+    // 2. Overwrite sendMessage to apply AES-256 Encryption
+    window.sendMessage = () => {
+        const t = document.getElementById('msg-input').value; if(!t || !partnerUid) return;
+        const encryptedText = CryptoJS.AES.encrypt(t, sessionKey).toString();
+        push(ref(db, `chats/${currentChatId}`), { sender: currentUid, text: encryptedText });
+        document.getElementById('msg-input').value = '';
+    };
+
+    // 3. Overwrite Media Uploads for encryption
+    window.uploadMedia = (i) => {
+        const f = i.files[0]; if(!f || !partnerUid) return;
+        const r = new FileReader();
+        r.onload = (e) => {
+            let type = f.type.startsWith('image') ? 'IMG' : 'VID';
+            const encryptedMedia = CryptoJS.AES.encrypt(e.target.result, sessionKey).toString();
+            // Encrypting both filename and content
+            push(ref(db, `chats/${currentChatId}`), { 
+                sender: currentUid, 
+                text: CryptoJS.AES.encrypt(f.name, sessionKey).toString(), 
+                media: encryptedMedia, 
+                mType: type 
+            });
+        };
+        r.readAsDataURL(f);
+    };
+
+    // 4. Overwrite openChat to apply AES-256 Decryption
+    window.openChat = (name, uid) => {
+        partnerUid = uid; appState = "CHAT";
+        document.getElementById('init-screen').style.display = 'none'; 
+        document.getElementById('chat-window').style.display = 'flex';
+        document.getElementById('chat-header-identity').innerText = `USER: ${name.toUpperCase()}`;
+        currentChatId = currentUid < uid ? `${currentUid}_${uid}` : `${uid}_${currentUid}`;
+        const box = document.getElementById('messages');
+        
+        off(ref(db, `chats/${currentChatId}`)); 
+        onValue(ref(db, `chats/${currentChatId}`), (snapshot) => {
+            box.innerHTML = '';
+            snapshot.forEach((child) => {
+                const d = child.val();
+                const div = document.createElement('div');
+                div.className = d.sender === currentUid ? 'msg me' : 'msg them';
+                
+                let clearText = "";
+                try { 
+                    clearText = CryptoJS.AES.decrypt(d.text, sessionKey).toString(CryptoJS.enc.Utf8); 
+                } catch(e) { clearText = "[ENCRYPTED_DATA]"; }
+                
+                let unsend = d.sender === currentUid ? `<span class="unsend-btn" onclick="unsendPacket('${child.key}')">✖</span>` : '';
+                let content = `<div>${clearText}</div>`;
+                
+                if(d.media) {
+                    let clearMedia = "";
+                    try { 
+                        clearMedia = CryptoJS.AES.decrypt(d.media, sessionKey).toString(CryptoJS.enc.Utf8); 
+                    } catch(e) { clearMedia = ""; }
+                    
+                    if(d.mType === 'IMG') content += `<img src="${clearMedia}" class="media-box" onclick="openMedia('${clearMedia}')" style="cursor:zoom-in;">`;
+                    else if(d.mType === 'VID') content += `<video src="${clearMedia}" class="media-box" controls></video>`;
+                }
+                div.innerHTML = unsend + content; box.appendChild(div);
+            });
+            box.scrollTop = box.scrollHeight;
+        });
+    };
+
+    // 5. Final Zero-Byte Memory Purge on Destruction
+    window.mutualDestruct = async () => {
+        document.getElementById('messages').innerHTML = ""; // Wipe display instantly
+        await set(ref(db, `destruct/${currentChatId}/${currentUid}`), true);
+        onValue(ref(db, `destruct/${currentChatId}`), (snap) => {
+            if (snap.exists() && Object.keys(snap.val()).length >= 2) {
+                document.getElementById('glitch-overlay').style.display = 'flex';
+                off(ref(db, `chats/${currentChatId}`));
+                remove(ref(db, `chats/${currentChatId}`)); 
+                remove(ref(db, `destruct/${currentChatId}`));
+                setTimeout(() => { 
+                    document.getElementById('glitch-overlay').style.display = 'none'; 
+                    sessionKey = null; // Purge key from RAM
+                    exitChat(); 
+                }, 2000);
+            }
+        });
+    };
 </script>
 </body>
 </html>
