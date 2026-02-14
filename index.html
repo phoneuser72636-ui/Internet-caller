@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>PRIVATE_MSG // MASTER_V51</title>
+    <title>PRIVATE_MSG // MASTER_V52</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 
@@ -81,7 +81,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getDatabase, ref, set, push, onValue, off, remove, onDisconnect, get, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    import { getDatabase, ref, set, push, onValue, off, remove, onDisconnect, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
     import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
     const firebaseConfig = { apiKey: "AIzaSyD2WRzWp0pl2niRizDPF_kqUrHB4_gY8gA", authDomain: "radio-c49c0.firebaseapp.com", databaseURL: "https://radio-c49c0-default-rtdb.firebaseio.com", projectId: "radio-c49c0", messagingSenderId: "231017755170", appId: "1:231017755170:web:02df1616290fe2edcdd07b" };
@@ -91,7 +91,7 @@
     let currentUid = "", currentUsername = "", partnerUid = "", currentChatId = "", appState = "HOME", SESSION_KEY = "";
 
     // SECURITY BLOCK
-    const SALT = "STATION_V51_REDUX";
+    const SALT = "STATION_V52_FINAL";
     const deriveKey = (p) => CryptoJS.SHA256(p + SALT).toString();
     const encrypt = (v) => CryptoJS.AES.encrypt(v, SESSION_KEY).toString();
     const decrypt = (c) => { try { return CryptoJS.AES.decrypt(c, SESSION_KEY).toString(CryptoJS.enc.Utf8); } catch(e) { return "[ENC]"; } };
@@ -128,7 +128,7 @@
         listenFriends(); listenRequests();
     }
 
-    // FIXED: Search Engine
+    // FIXED: Search and Request Handshake
     window.sendFriendRequest = async () => {
         const target = document.getElementById('target-user').value.trim();
         if(!target || target === currentUsername) return;
@@ -151,13 +151,20 @@
         });
     }
 
-    // FIXED: Multi-Path Handshake Bond
+    // FIXED: Atomic Handshake Striking
     window.acceptFriend = async (name, uid) => {
-        const updates = {};
-        updates[`friends/${currentUid}/${uid}`] = { name: name };
-        updates[`friends/${uid}/${currentUid}`] = { name: currentUsername };
-        updates[`requests/${currentUid}/${uid}`] = null; // Removes request instantly
-        await update(ref(db), updates);
+        try {
+            // Path 1: Write to Your Friends
+            await set(ref(db, `friends/${currentUid}/${uid}`), { name: name });
+            // Path 2: Write to Their Friends
+            await set(ref(db, `friends/${uid}/${currentUid}`), { name: currentUsername });
+            // Path 3: Wipe Request from Server
+            await remove(ref(db, `requests/${currentUid}/${uid}`));
+            
+            showStatus("LINK_ESTABLISHED");
+        } catch (e) {
+            showStatus("LINK_ERROR");
+        }
     };
 
     function listenFriends() {
