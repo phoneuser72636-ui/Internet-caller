@@ -2,239 +2,103 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>PRIVATE_MSG // MASTER_V54</title>
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CYBER_PROTOCOL // ENCRYPTED_CHANNEL</title>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
-
     <style>
-        :root { --pink: #ff0055; --blue: #00f2ff; --bg: #050505; --green: #00ff00; --grey: #444; }
-        body { background: black url('https://wallpaperaccess.com/full/1324706.jpg') no-repeat center center fixed; background-size: cover; color: white; font-family: 'Courier New', monospace; margin: 0; overflow: hidden; height: 100vh; }
-        
-        #media-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.98); z-index: 7000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(20px); }
-        #overlay-img { max-width: 95%; max-height: 90%; transition: transform 0.2s; cursor: grab; }
-        .close-media-btn { position: absolute; top: 20px; right: 20px; font-size: 30px; color: var(--pink); cursor: pointer; z-index: 7001; }
-
-        #glitch-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 6000; display: none; align-items: center; justify-content: center; color: black; font-weight: bold; animation: glitchSync 0.2s infinite; }
-        @keyframes glitchSync { 0% { background: var(--pink); transform: skew(3deg); } 50% { background: var(--blue); transform: skew(-3deg); } 100% { background: white; } }
-
-        .os-container { display: none; height: 100vh; grid-template-columns: 85px 1fr; border: 4px solid var(--pink); box-sizing: border-box; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); }
-        .sidebar { border-right: 2px solid var(--pink); display: flex; flex-direction: column; padding: 5px; height: 100%; background: rgba(0,0,0,0.9); }
-        .friend-circle { width: 55px; height: 55px; border: 2px solid var(--blue); border-radius: 50%; margin: 15px auto; display: flex; align-items: center; justify-content: center; position: relative; background: black; cursor: pointer; font-weight: bold; color: var(--blue); font-size: 14px; text-transform: uppercase; }
-        .status-dot { position: absolute; bottom: 2px; right: 2px; width: 14px; height: 14px; border-radius: 50%; border: 2px solid black; }
-        .online { background: var(--green); box-shadow: 0 0 10px var(--green); }
-
-        #chat-window { flex: 1; display: none; flex-direction: column; height: 100%; position: relative; }
-        #messages { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; padding-bottom: 140px; }
-        #chat-header-identity { background: rgba(0, 242, 255, 0.1); border-bottom: 1px solid var(--blue); padding: 10px; text-align: center; font-size: 12px; color: var(--blue); letter-spacing: 2px; font-weight: bold; }
-
-        .msg { margin-bottom: 18px; padding: 12px; border-radius: 12px; max-width: 80%; position: relative; line-height: 1.4; border: 1px solid transparent; }
-        .msg.me { align-self: flex-end; border-color: var(--blue); color: var(--blue); background: rgba(0,242,255,0.05); margin-right: 15px; }
-        .msg.them { align-self: flex-start; border-color: var(--pink); color: var(--pink); background: rgba(255,0,85,0.05); }
-        
-        .unsend-btn { position: absolute; right: -25px; top: 50%; transform: translateY(-50%); color: red; font-weight: bold; cursor: pointer; font-size: 14px; padding: 5px; opacity: 0.4; }
-        .input-dock { position: absolute; bottom: 0; left: 0; width: 100%; display: flex; align-items: center; border-top: 2px solid var(--blue); background: black; padding: 12px; box-sizing: border-box; }
-        .cyber-btn { background: transparent; color: var(--pink); border: 2px solid var(--pink); padding: 8px 12px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 10px; }
-        
-        #sys-note { font-size: 9px; color: var(--green); text-align: center; height: 12px; margin-top: 5px; }
+        :root { --neon-cyan: #00f2ff; --neon-magenta: #ff00ff; --matrix-green: #00ff88; --dark-depth: #050505; }
+        body, html { margin: 0; padding: 0; height: 100%; background: var(--dark-depth); color: var(--neon-cyan); font-family: 'Courier New', monospace; overflow: hidden; background-image: linear-gradient(rgba(0, 242, 255, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 242, 255, 0.05) 1px, transparent 1px); background-size: 30px 30px; }
+        .scanline { position: fixed; inset: 0; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.2) 50%); background-size: 100% 4px; pointer-events: none; z-index: 10; }
+        #auth-gate { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: black; z-index: 100; }
+        .gate-box { border: 1px solid var(--neon-cyan); padding: 40px; box-shadow: 0 0 25px rgba(0, 242, 255, 0.4); text-align: center; }
+        #interface { display: none; height: 100vh; flex-direction: column; }
+        #header { padding: 15px; border-bottom: 1px solid var(--neon-cyan); display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.8); }
+        #chat-flow { flex: 1; overflow-y: auto; padding: 25px; display: flex; flex-direction: column; gap: 15px; }
+        .msg { padding: 12px; border: 1px solid rgba(0, 242, 255, 0.3); position: relative; max-width: 75%; }
+        .sent { align-self: flex-end; border-right: 4px solid var(--neon-cyan); background: rgba(0, 242, 255, 0.05); }
+        .received { align-self: flex-start; border-left: 4px solid var(--neon-magenta); color: var(--neon-magenta); border-color: var(--neon-magenta); }
+        .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 5px; }
+        .online { background: var(--matrix-green); box-shadow: 0 0 10px var(--matrix-green); }
+        .offline { background: #444; }
+        input { background: black; border: 1px solid var(--neon-cyan); color: var(--neon-cyan); padding: 12px; font-family: inherit; }
+        button { background: var(--neon-cyan); color: black; border: none; padding: 10px 25px; cursor: pointer; text-transform: uppercase; font-weight: bold; }
+        #destroy-btn { background: none; border: 1px solid #ff4d4d; color: #ff4d4d; }
+        #purge-fx { display: none; position: fixed; inset: 0; z-index: 1000; animation: hyper-glitch 0.15s infinite; }
+        @keyframes hyper-glitch { 0% { background: #000; clip-path: inset(10% 0 50% 0); transform: skew(5deg); } 50% { background: var(--neon-magenta); clip-path: inset(40% 0 10% 0); transform: scale(1.1); } 100% { background: #fff; transform: translate(5px, -5px); } }
     </style>
 </head>
 <body>
-
-<div id="media-overlay" onclick="closeMedia()">
-    <img id="overlay-img" src="">
-</div>
-
-<div id="glitch-overlay">DATA_VOID_WIPED</div>
-
-<div id="auth-gate" style="position:fixed; top:0; left:0; width:100%; height:100%; background:black; z-index:5000; display:flex; flex-direction:column; align-items:center; justify-content:center;">
-    <h2 style="color: var(--pink); letter-spacing: 5px;">SECURE LOGIN</h2>
-    <input type="text" id="auth-user" placeholder="USERNAME" style="background: black; border: 1px solid var(--blue); color: white; padding: 15px; width: 250px; margin-bottom: 10px;">
-    <input type="password" id="auth-pass" placeholder="PASSWORD" style="background: black; border: 1px solid var(--blue); color: white; padding: 15px; width: 250px; margin-bottom: 20px;">
-    <button class="cyber-btn" onclick="handleAuth()" style="width: 250px;">INITIALIZE</button>
-</div>
-
-<div class="os-container" id="main-view">
-    <div class="sidebar" id="friends-list"></div>
-    <div class="main-view" style="display: flex; flex-direction: column; height: 100%; overflow: hidden;">
-        <div id="init-screen" style="padding: 20px;">
-            <div style="font-size: 10px; color: var(--pink); margin-bottom: 20px;">TERMINAL: <span id="user-display">---</span></div>
-            <input type="text" id="target-user" placeholder="SEARCH_ID..." style="border-bottom: 2px solid var(--blue); width: 100%; background:transparent; color:var(--blue); padding:10px;">
-            <button class="cyber-btn" onclick="sendFriendRequest()" style="width: 100%; margin-top: 15px;">SEND REQUEST</button>
-            <div id="sys-note"></div>
-            <div id="req-list" style="margin-top: 30px;"></div>
-            <button class="cyber-btn" onclick="logout()" style="margin-top:auto; width:100%;">LOGOUT</button>
-        </div>
-        <div id="chat-window">
-            <div id="chat-header-identity">USER: ---</div>
-            <div style="display:flex; justify-content: space-around; padding:12px; border-bottom:1px solid var(--blue); background:rgba(0,0,0,0.5);">
-                <button class="cyber-btn" style="color:yellow; border-color:yellow;" onclick="mutualDestruct()">PURGE CHAT</button>
-                <button class="cyber-btn" onclick="exitChat()">BACK</button>
-            </div>
-            <div id="messages"></div>
-            <div class="input-dock">
-                <div style="color: var(--blue); border: 2px solid var(--blue); border-radius: 50%; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 20px; margin-right: 10px;" onclick="document.getElementById('file-input').click()">+</div>
-                <input type="file" id="file-input" hidden onchange="uploadMedia(this)">
-                <input type="text" id="msg-input" placeholder="SECURE_STREAM..." style="flex:1; background:transparent; border:none; color:var(--blue); outline:none;">
-                <button class="cyber-btn" onclick="sendMessage()">SEND</button>
-            </div>
+    <div class="scanline"></div>
+    <div id="purge-fx"></div>
+    <div id="auth-gate">
+        <div class="gate-box">
+            <h1>AUTHENTICATION_REQUIRED</h1>
+            <input type="text" id="user-id" placeholder="IDENTITY_CODE"><br><br>
+            <button onclick="bootSystem()">INITIALIZE_LINK</button>
         </div>
     </div>
-</div>
-
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getDatabase, ref, set, push, onValue, off, remove, onDisconnect, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-
-    const firebaseConfig = { apiKey: "AIzaSyD2WRzWp0pl2niRizDPF_kqUrHB4_gY8gA", authDomain: "radio-c49c0.firebaseapp.com", databaseURL: "https://radio-c49c0-default-rtdb.firebaseio.com", projectId: "radio-c49c0", messagingSenderId: "231017755170", appId: "1:231017755170:web:02df1616290fe2edcdd07b" };
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-    const auth = getAuth(app);
-    let currentUid = "", currentUsername = "", partnerUid = "", currentChatId = "", SESSION_KEY = "";
-
-    // SECURITY CORE
-    const SALT = "STATION_V54_FINAL";
-    const deriveKey = (p) => CryptoJS.SHA256(p + SALT).toString();
-    const encrypt = (v) => CryptoJS.AES.encrypt(v, SESSION_KEY).toString();
-    const decrypt = (c) => { try { return CryptoJS.AES.decrypt(c, SESSION_KEY).toString(CryptoJS.enc.Utf8); } catch(e) { return "[ENC]"; } };
-    const notify = (t) => { const n = document.getElementById('sys-note'); n.innerText = t; setTimeout(() => n.innerText="", 3000); };
-
-    window.handleAuth = async () => {
-        const u = document.getElementById('auth-user').value.trim();
-        const p = document.getElementById('auth-pass').value.trim();
-        if(!u || !p) return;
-        SESSION_KEY = deriveKey(p);
-        const loginHash = CryptoJS.SHA256(SESSION_KEY).toString();
-        const snap = await get(ref(db, `users/${u}`));
-        if(snap.exists() && snap.val().password !== loginHash) { alert("AUTH_FAIL"); return; }
-        const uid = snap.exists() ? snap.val().uid : auth.currentUser.uid;
-        if(!snap.exists()) await set(ref(db, `users/${u}`), { uid: uid, password: loginHash, name: u });
-        localStorage.setItem('rt_session', JSON.stringify({u, uid, k: SESSION_KEY}));
-        location.reload();
-    };
-
-    onAuthStateChanged(auth, (user) => { 
-        if (!user) signInAnonymously(auth);
-        const saved = localStorage.getItem('rt_session');
-        if (saved) { const d = JSON.parse(saved); SESSION_KEY = d.k; login(d.u, d.uid); }
-    });
-
-    function login(u, uid) {
-        currentUsername = u; currentUid = uid;
-        document.getElementById('auth-gate').style.display = 'none';
-        document.getElementById('main-view').style.display = 'grid';
-        document.getElementById('user-display').innerText = u;
-        onValue(ref(db, ".info/connected"), (s) => {
-            if (s.val()) { set(ref(db, `status/${uid}`), { state: "online" }); onDisconnect(ref(db, `status/${uid}`)).set({ state: "offline" }); }
+    <div id="interface">
+        <div id="header">
+            <div><span id="node-status" class="status-dot offline"></span><span id="target-id">REMOTE_NODE: SEARCHING...</span></div>
+            <button id="destroy-btn" onclick="triggerPurge()">PURGE_DATA</button>
+        </div>
+        <div id="chat-flow"></div>
+        <div id="typing-notify" style="height:20px; font-size:10px; padding-left:20px; color:var(--matrix-green);"></div>
+        <div style="padding: 20px; background: #000; display: flex; gap: 10px;">
+            <input type="text" id="data-input" placeholder="INPUT_ENCRYPTED_STRING..." style="flex: 1;" oninput="emitTyping()">
+            <button onclick="dispatchData()">SEND</button>
+        </div>
+    </div>
+    <script>
+        const socket = io();
+        const PASSKEY = "AES_KEY_2048"; 
+        let myId = "", typingTimeout;
+        function bootSystem() {
+            myId = document.getElementById('user-id').value;
+            if(!myId) return;
+            document.getElementById('auth-gate').style.display = 'none';
+            document.getElementById('interface').style.display = 'flex';
+            socket.emit('node_join', { user: myId });
+        }
+        const encrypt = (val) => CryptoJS.AES.encrypt(val, PASSKEY).toString();
+        const decrypt = (val) => CryptoJS.AES.decrypt(val, PASSKEY).toString(CryptoJS.enc.Utf8);
+        function dispatchData() {
+            const input = document.getElementById('data-input');
+            const packet = { id: 'pkt_' + Date.now(), sender: myId, data: encrypt(input.value) };
+            socket.emit('broadcast_msg', packet);
+            renderMsg(packet, true);
+            input.value = '';
+        }
+        socket.on('receive_msg', (packet) => renderMsg(packet, false));
+        function renderMsg(pkt, isSelf) {
+            const flow = document.getElementById('chat-flow');
+            const div = document.createElement('div');
+            div.id = pkt.id;
+            div.className = `msg ${isSelf ? 'sent' : 'received'}`;
+            let content = decrypt(pkt.data);
+            if(content.match(/\.(jpg|jpeg|png|gif)$/i)) content = `<img src="${content}" style="max-width:100%; border:1px solid var(--neon-cyan)">`;
+            else if(content.match(/\.(mp4|webm)$/i)) content = `<video src="${content}" controls style="max-width:100%"></video>`;
+            const unsendBtn = isSelf ? `<br><span onclick="unsend('${pkt.id}')" style="color:red; cursor:pointer; font-size:9px">[X_UNSEND]</span>` : '';
+            div.innerHTML = content + unsendBtn;
+            flow.appendChild(div);
+            flow.scrollTop = flow.scrollHeight;
+        }
+        function unsend(id) { socket.emit('unsend_pkt', { msg_id: id }); }
+        socket.on('kill_msg', (data) => { document.getElementById(data.msg_id)?.remove(); });
+        function emitTyping() {
+            socket.emit('typing_start', { user: myId });
+            clearTimeout(typingTimeout);
+            typingTimeout = setTimeout(() => socket.emit('typing_end'), 2000);
+        }
+        socket.on('show_typing', (data) => { document.getElementById('typing-notify').innerText = `${data.user} is decrypting message...`; });
+        socket.on('hide_typing', () => { document.getElementById('typing-notify').innerText = ''; });
+        function triggerPurge() { socket.emit('purge_request', { user: myId }); }
+        socket.on('glitch_purge', () => {
+            document.getElementById('purge-fx').style.display = 'block';
+            setTimeout(() => window.location.reload(), 2000);
         });
-        listenFriends(); listenRequests();
-    }
-
-    // FIXED: Non-Looping Request Engine
-    window.sendFriendRequest = async () => {
-        const target = document.getElementById('target-user').value.trim();
-        if(!target || target === currentUsername) return;
-        const snap = await get(ref(db, `users/${target}`));
-        if (snap.exists()) {
-            await set(ref(db, `requests/${snap.val().uid}/${currentUid}`), { from: currentUsername, fromUid: currentUid });
-            notify("UPLINK_SENT");
-        } else { notify("ID_NOT_FOUND"); }
-    };
-
-    function listenRequests() {
-        onValue(ref(db, `requests/${currentUid}`), (s) => {
-            const l = document.getElementById('req-list'); l.innerHTML = '';
-            if(!s.exists()) return; // Protection against loop flickering
-            s.forEach((c) => {
-                const d = c.val();
-                const div = document.createElement('div');
-                div.innerHTML = `<div style="font-size:10px; margin-bottom:10px;">REQ: ${d.from} <button class="cyber-btn" onclick="acceptFriend('${d.from}','${d.fromUid}')">ACCEPT</button></div>`;
-                l.appendChild(div);
-            });
-        });
-    }
-
-    // FIXED: Atomic Handshake Striking
-    window.acceptFriend = async (name, uid) => {
-        // Step 1: Create mutual links
-        await set(ref(db, `friends/${currentUid}/${uid}`), { name: name });
-        await set(ref(db, `friends/${uid}/${currentUid}`), { name: currentUsername });
-        // Step 2: Physically remove the request from server (ends the loop)
-        await remove(ref(db, `requests/${currentUid}/${uid}`));
-        notify("STATION_LINKED");
-    };
-
-    function listenFriends() {
-        onValue(ref(db, `friends/${currentUid}`), (s) => {
-            const l = document.getElementById('friends-list'); l.innerHTML = '';
-            s.forEach((c) => {
-                const f = c.val();
-                const d = document.createElement('div');
-                d.className = 'friend-circle';
-                d.innerHTML = `<span>${f.name.substring(0,2)}</span><div id="dot-${c.key}" class="status-dot"></div>`;
-                d.onclick = () => openChat(f.name, c.key);
-                l.appendChild(d);
-                onValue(ref(db, `status/${c.key}`), (st) => {
-                    const dot = document.getElementById(`dot-${c.key}`);
-                    if(dot) dot.className = `status-dot ${st.val()?.state === 'online' ? 'online' : 'offline'}`;
-                });
-            });
-        });
-    }
-
-    // MESSAGING
-    function openChat(name, uid) {
-        partnerUid = uid;
-        document.getElementById('init-screen').style.display = 'none';
-        document.getElementById('chat-window').style.display = 'flex';
-        document.getElementById('chat-header-identity').innerText = `USER: ${name}`;
-        currentChatId = currentUid < uid ? `${currentUid}_${uid}` : `${uid}_${currentUid}`;
-        off(ref(db, `chats/${currentChatId}`));
-        onValue(ref(db, `chats/${currentChatId}`), (snap) => {
-            const box = document.getElementById('messages'); box.innerHTML = '';
-            snap.forEach((c) => {
-                const d = c.val();
-                const div = document.createElement('div');
-                div.className = d.sender === currentUid ? 'msg me' : 'msg them';
-                let content = `<div>${decrypt(d.text)}</div>`;
-                if(d.media) content += `<img src="${decrypt(d.media)}" class="media-box" onclick="openMedia('${decrypt(d.media)}')">`;
-                let unsend = d.sender === currentUid ? `<span class="unsend-btn" onclick="removeMsg('${c.key}')">✖</span>` : '';
-                div.innerHTML = unsend + content; box.appendChild(div);
-            });
-            box.scrollTop = box.scrollHeight;
-        });
-    }
-
-    window.removeMsg = (id) => remove(ref(db, `chats/${currentChatId}/${id}`));
-    window.sendMessage = () => {
-        const t = document.getElementById('msg-input').value; if(!t) return;
-        push(ref(db, `chats/${currentChatId}`), { sender: currentUid, text: encrypt(t) });
-        document.getElementById('msg-input').value = '';
-    };
-
-    window.uploadMedia = (i) => {
-        const r = new FileReader(); r.onload = (e) => {
-            push(ref(db, `chats/${currentChatId}`), { sender: currentUid, text: encrypt(`[MEDIA]`), media: encrypt(e.target.result) });
-        }; r.readAsDataURL(i.files[0]);
-    };
-
-    window.openMedia = (u) => { document.getElementById('overlay-img').src = u; document.getElementById('media-overlay').style.display = 'flex'; };
-    window.closeMedia = () => { document.getElementById('media-overlay').style.display = 'none'; };
-    window.exitChat = () => { document.getElementById('chat-window').style.display = 'none'; document.getElementById('init-screen').style.display = 'block'; partnerUid=""; };
-    window.logout = () => { localStorage.clear(); location.reload(); };
-
-    window.mutualDestruct = async () => {
-        const cid = currentChatId;
-        await set(ref(db, `destruct/${cid}/${currentUid}`), true);
-        onValue(ref(db, `destruct/${cid}`), (s) => {
-            if (s.exists() && Object.keys(s.val()).length >= 2) {
-                document.getElementById('glitch-overlay').style.display = 'flex';
-                off(ref(db, `chats/${cid}`)); remove(ref(db, `chats/${cid}`)); remove(ref(db, `destruct/${cid}`));
-                setTimeout(() => { document.getElementById('glitch-overlay').style.display = 'none'; exitChat(); }, 2000);
-            }
-        });
-    };
-</script>
+        socket.on('node_status', (data) => { document.getElementById('node-status').className = `status-dot ${data.online ? 'online' : 'offline'}`; });
+    </script>
 </body>
 </html>
