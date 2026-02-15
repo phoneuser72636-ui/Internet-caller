@@ -2,209 +2,256 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CYBER_PROTOCOL // ELITE_V3</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CYBER_PROTOCOL // ELITE_V4</title>
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <style>
-        :root { --neon: #00f2ff; --warn: #ff0055; --safe: #00ff88; --void: #050505; --side-w: 280px; }
-        * { box-sizing: border-box; }
-        body, html { margin: 0; padding: 0; height: 100%; background: var(--void); color: var(--neon); font-family: 'Courier New', monospace; overflow: hidden; }
-        .scanline { position: fixed; inset: 0; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.2) 50%); background-size: 100% 4px; pointer-events: none; z-index: 999; }
+        :root { --neon: #00f2ff; --warn: #ff0055; --safe: #00ff88; --void: #050505; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
+        body, html { margin: 0; padding: 0; height: 100%; background: var(--void); color: var(--neon); font-family: 'Share Tech Mono', monospace; overflow: hidden; }
         
-        /* Auth Layer */
-        #auth-gate { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: #000; z-index: 1000; }
-        .auth-box { border: 1px solid var(--neon); padding: 50px; box-shadow: 0 0 30px rgba(0, 242, 255, 0.3); background: #000; text-align: center; }
+        /* Scanline & Purge Glitch */
+        .scanline { position: fixed; inset: 0; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.2) 50%); background-size: 100% 4px; pointer-events: none; z-index: 1000; }
+        #purge-fx { display: none; position: fixed; inset: 0; z-index: 3000; animation: glitch-purge 0.1s infinite; }
+        @keyframes glitch-purge { 0% { background: var(--warn); clip-path: inset(10% 0 30% 0); } 50% { background: var(--neon); transform: scale(1.1) skew(5deg); } 100% { background: #fff; } }
 
-        /* Main Shell */
-        #main-shell { display: none; height: 100vh; display: flex; }
-        
-        /* Sidebar (User List) */
-        #sidebar { width: var(--side-w); border-right: 1px solid var(--neon); display: flex; flex-direction: column; background: rgba(0,0,0,0.95); }
-        .side-head { padding: 20px; border-bottom: 1px solid var(--neon); font-weight: bold; letter-spacing: 2px; }
-        #node-list { flex: 1; overflow-y: auto; padding: 10px; }
-        .node { padding: 15px; margin-bottom: 8px; border: 1px solid rgba(0, 242, 255, 0.1); cursor: pointer; display: flex; align-items: center; transition: 0.2s; }
-        .node:hover, .node.active { background: rgba(0, 242, 255, 0.1); border-color: var(--neon); box-shadow: inset 0 0 10px rgba(0, 242, 255, 0.2); }
-        .dot { width: 8px; height: 8px; border-radius: 50%; margin-right: 12px; }
-        .online { background: var(--safe); box-shadow: 0 0 8px var(--safe); }
-        .offline { background: #444; }
+        /* Auth Gate */
+        #auth-gate { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: #000; z-index: 2000; padding: 20px; }
+        .auth-box { width: 100%; max-width: 420px; border: 1px solid var(--neon); padding: 40px; box-shadow: 0 0 30px rgba(0, 242, 255, 0.3); background: #000; text-align: center; }
+        .auth-input { width: 100%; padding: 15px; background: #000; border: 1px solid var(--neon); color: var(--neon); margin-bottom: 20px; font-family: inherit; font-size: 1rem; }
+
+        /* App Layout */
+        #app-shell { display: none; height: 100vh; width: 100vw; position: relative; }
+
+        /* Sidebar Navigation */
+        #sidebar { width: 100%; height: 100%; border-right: 1px solid var(--neon); display: flex; flex-direction: column; background: #000; position: absolute; z-index: 500; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .side-head { padding: 25px 20px; border-bottom: 1px solid var(--neon); display: flex; justify-content: space-between; align-items: center; font-weight: bold; letter-spacing: 2px; }
+        #node-list { flex: 1; overflow-y: auto; padding: 15px; }
+        .node { padding: 20px; border: 1px solid rgba(0, 242, 255, 0.2); margin-bottom: 12px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+        .node.active-node { border-color: var(--safe); box-shadow: inset 0 0 15px rgba(0, 255, 136, 0.1); }
 
         /* Chat Workspace */
-        #workspace { flex: 1; display: flex; flex-direction: column; background-image: radial-gradient(rgba(0, 242, 255, 0.05) 1px, transparent 0); background-size: 30px 30px; }
-        #work-head { padding: 15px 25px; border-bottom: 1px solid var(--neon); display: flex; justify-content: space-between; align-items: center; background: #000; }
-        #chat-stream { flex: 1; overflow-y: auto; padding: 30px; display: flex; flex-direction: column; gap: 15px; }
-        
-        /* Bubbles */
-        .msg { padding: 12px 18px; border: 1px solid rgba(0, 242, 255, 0.2); max-width: 65%; position: relative; backdrop-filter: blur(5px); }
+        #workspace { width: 100%; height: 100%; display: flex; flex-direction: column; background: var(--void); transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); position: absolute; z-index: 600; }
+        #workspace.active { transform: translateX(0); }
+        #chat-header { padding: 15px 20px; border-bottom: 1px solid var(--neon); display: flex; align-items: center; background: #000; justify-content: space-between; }
+        #chat-flow { flex: 1; overflow-y: auto; padding: 25px; display: flex; flex-direction: column; gap: 15px; background-image: linear-gradient(rgba(0, 242, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 242, 255, 0.03) 1px, transparent 1px); background-size: 25px 25px; }
+
+        /* Messaging */
+        .msg { padding: 14px 18px; border: 1px solid rgba(0, 242, 255, 0.3); max-width: 85%; position: relative; word-break: break-all; }
         .sent { align-self: flex-end; border-right: 4px solid var(--neon); background: rgba(0, 242, 255, 0.05); }
         .received { align-self: flex-start; border-left: 4px solid var(--warn); color: var(--warn); border-color: var(--warn); }
-        .unsend-trigger { color: #ff4d4d; font-size: 10px; cursor: pointer; margin-top: 5px; display: block; }
+        .msg-info { font-size: 9px; margin-top: 6px; display: flex; justify-content: flex-end; gap: 5px; opacity: 0.6; }
+        .read-tick { color: var(--safe); font-weight: bold; }
 
-        /* Input Deck */
-        #input-deck { padding: 20px; background: #000; border-top: 1px solid var(--neon); display: flex; gap: 12px; }
-        input { background: #000; border: 1px solid var(--neon); color: var(--neon); padding: 14px; font-family: inherit; outline: none; }
-        button { background: var(--neon); color: #000; border: none; padding: 10px 25px; cursor: pointer; font-weight: bold; text-transform: uppercase; }
-        .purge-btn { background: none; border: 1px solid var(--warn); color: var(--warn); }
-        .logout-btn { background: none; border: 1px solid #777; color: #777; width: 100%; margin-top: 10px; }
+        /* Input Controls */
+        #deck { padding: 15px; background: #000; border-top: 1px solid var(--neon); display: flex; align-items: center; gap: 12px; }
+        .btn-icon { width: 45px; height: 45px; border: 1px solid var(--neon); display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--neon); background: none; font-size: 1.5rem; }
+        #msg-in { flex: 1; background: #0a0a0a; border: 1px solid var(--neon); color: var(--neon); padding: 12px; font-family: inherit; }
+        .btn-send { background: var(--neon); color: #000; padding: 0 20px; height: 45px; font-weight: bold; border: none; letter-spacing: 1px; }
 
-        /* Purge Animation */
-        #purge-overlay { display: none; position: fixed; inset: 0; z-index: 2000; animation: glitch-purge 0.15s infinite; }
-        @keyframes glitch-purge { 0% { background: var(--warn); clip-path: inset(20% 0 40% 0); } 50% { background: var(--neon); transform: scale(1.05); } 100% { background: #000; } }
+        .media-box { max-width: 100%; border: 1px solid var(--neon); margin-top: 8px; cursor: pointer; display: block; }
     </style>
 </head>
 <body>
     <div class="scanline"></div>
-    <div id="purge-overlay"></div>
+    <div id="purge-fx"></div>
 
     <div id="auth-gate">
         <div class="auth-box">
-            <h1 style="letter-spacing: 5px;">ANONYMOUS_GATE</h1>
-            <input type="text" id="username" placeholder="NODE_ID" style="width: 100%;"><br><br>
-            <input type="password" id="password" placeholder="SECRET_PHRASE" style="width: 100%;"><br><br>
-            <button onclick="auth()" style="width: 100%;">INITIALIZE_CONNECTION</button>
+            <h1 style="letter-spacing: 6px; margin-bottom: 30px;">PROTOCOL_ACCESS</h1>
+            <input type="text" id="user_id" class="auth-input" placeholder="NODE_USERNAME">
+            <input type="password" id="pass_phrase" class="auth-input" placeholder="ACCESS_PASSWORD">
+            <button onclick="auth()" style="width: 100%; background: var(--neon); color: #000; padding: 18px; font-weight: bold; border: none; cursor: pointer;">INITIALIZE_AUTHENTICATION</button>
+            <p id="auth-err" style="color: var(--warn); font-size: 11px; margin-top: 20px;"></p>
         </div>
     </div>
 
-    <div id="main-shell">
+    <div id="app-shell">
         <div id="sidebar">
-            <div class="side-head">SECURE_NODES</div>
+            <div class="side-head">
+                <span>ACTIVE_NODES</span>
+                <button onclick="terminate()" style="color: var(--warn); background: none; border: 1px solid var(--warn); padding: 5px 12px; font-size: 10px; cursor: pointer;">TERMINATE</button>
+            </div>
             <div id="node-list"></div>
-            <div style="padding: 15px;">
-                <div id="my-identity" style="font-size: 11px; opacity: 0.6;"></div>
-                <button class="logout-btn" onclick="terminate()">LOGOUT_SYSTEM</button>
+            <div style="padding: 15px; border-top: 1px solid var(--neon); font-size: 11px; opacity: 0.5;">
+                LOCAL_ID: <span id="my-id"></span>
             </div>
         </div>
 
         <div id="workspace">
-            <div id="work-head">
-                <span id="active-node-name">WAITING_FOR_LINK...</span>
-                <button class="purge-btn" onclick="requestPurge()">PURGE_SESSION</button>
+            <div id="chat-header">
+                <button onclick="exitChat()" style="background: none; color: var(--neon); border: 1px solid var(--neon); padding: 6px 12px; cursor: pointer;">[BACK]</button>
+                <div style="text-align: center;">
+                    <span id="target-label" style="font-weight: bold; letter-spacing: 2px;">...</span><br>
+                    <span id="typing-label" style="font-size: 9px; color: var(--safe); height: 12px; display: block;"></span>
+                </div>
+                <button onclick="nuclearPurge()" style="background: none; border: 1px solid var(--warn); color: var(--warn); padding: 6px 12px; font-size: 10px; cursor: pointer;">PURGE</button>
             </div>
-            <div id="chat-stream"></div>
-            <div id="typing-indicator" style="height:20px; font-size:10px; padding:0 30px; color: var(--safe);"></div>
-            <div id="input-deck">
-                <input type="text" id="main-input" placeholder="TYPE_ENCRYPTED_PACKET..." style="flex:1;" oninput="emitTyping()">
-                <button onclick="dispatch()">DISPATCH</button>
+            
+            <div id="chat-flow"></div>
+
+            <div id="deck">
+                <button class="btn-icon" onclick="openUplink()">+</button>
+                <input type="text" id="msg-in" placeholder="ENCRYPT_DATA..." oninput="emitTyping()">
+                <button class="btn-send" onclick="dispatch()">SEND</button>
             </div>
+            <input type="file" id="uplink" style="display: none;" onchange="handleUplink(this)">
         </div>
     </div>
 
     <script>
         const socket = io();
-        const AES_KEY = "PROTOCOL_ZERO_V3";
-        let userState = null;
-        let currentTarget = null;
-        let typeTimer;
+        const AES_KEY = "PROTOCOL_MASTER_V4";
+        let session = null;
+        let activePeer = null;
+        let tOut;
 
-        // Auto-Login Sequence
+        // Auto-Login Implementation
         window.onload = () => {
-            const session = localStorage.getItem('cyber_v3_session');
-            if(session) {
-                userState = JSON.parse(session);
-                enterSystem();
+            const vault = localStorage.getItem('cyber_v4_vault');
+            if(vault) {
+                session = JSON.parse(vault);
+                boot();
             }
         };
 
         function auth() {
-            const u = document.getElementById('username').value;
-            const p = document.getElementById('password').value;
+            const u = document.getElementById('user_id').value;
+            const p = document.getElementById('pass_phrase').value;
             if(!u || !p) return;
 
-            // Password Transformation (SHA-256)
-            const securePass = CryptoJS.SHA256(p).toString();
-            userState = { id: u, token: securePass };
-            localStorage.setItem('cyber_v3_session', JSON.stringify(userState));
-            enterSystem();
+            // Password Protection (SHA-256)
+            const token = CryptoJS.SHA256(p).toString();
+            session = { user: u, token: token };
+            localStorage.setItem('cyber_v4_vault', JSON.stringify(session));
+            boot();
         }
 
-        function enterSystem() {
+        function boot() {
             document.getElementById('auth-gate').style.display = 'none';
-            document.getElementById('main-shell').style.display = 'flex';
-            document.getElementById('my-identity').innerText = `LOCAL_NODE: ${userState.id}`;
-            socket.emit('node_join', { user: userState.id });
-            syncNodes(); 
+            document.getElementById('app-shell').style.display = 'flex';
+            document.getElementById('my-id').innerText = session.user;
+            socket.emit('node_handshake', { user: session.user, token: session.token });
+            syncDirectory(); 
         }
 
         function terminate() {
-            localStorage.removeItem('cyber_v3_session');
+            localStorage.removeItem('cyber_v4_vault');
             window.location.reload();
         }
 
-        // Messaging Core
+        // Navigation
+        function enterChat(peer) {
+            activePeer = peer;
+            document.getElementById('target-label').innerText = `NODE: ${peer}`;
+            document.getElementById('workspace').classList.add('active');
+            socket.emit('peer_view', { from: session.user, to: peer });
+        }
+
+        function exitChat() {
+            document.getElementById('workspace').classList.remove('active');
+            activePeer = null;
+        }
+
+        // Secure Messaging
         function dispatch() {
-            const box = document.getElementById('main-input');
-            if(!box.value || !currentTarget) return;
+            const input = document.getElementById('msg-in');
+            if(!input.value || !activePeer) return;
 
             const packet = {
                 pid: 'p_' + Date.now(),
-                from: userState.id,
-                to: currentTarget,
-                payload: CryptoJS.AES.encrypt(box.value, AES_KEY).toString()
+                from: session.user,
+                to: activePeer,
+                payload: CryptoJS.AES.encrypt(input.value, AES_KEY).toString(),
+                stamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
             };
 
-            socket.emit('secure_dispatch', packet);
-            render(packet, true);
-            box.value = '';
+            socket.emit('secure_broadcast', packet);
+            append(packet, true);
+            input.value = '';
         }
 
-        function render(pkt, isMe) {
-            const stream = document.getElementById('chat-stream');
-            const el = document.createElement('div');
-            el.id = pkt.pid;
-            el.className = `msg ${isMe ? 'sent' : 'received'}`;
+        function append(pkt, isMe) {
+            const flow = document.getElementById('chat-flow');
+            const div = document.createElement('div');
+            div.id = pkt.pid;
+            div.className = `msg ${isMe ? 'sent' : 'received'}`;
             
             let data = CryptoJS.AES.decrypt(pkt.payload, AES_KEY).toString(CryptoJS.enc.Utf8);
             
-            // Media Processor
-            if(data.match(/\.(jpg|jpeg|png|gif)$/i)) data = `<img src="${data}" style="max-width:100%; border:1px solid var(--neon)">`;
-            else if(data.match(/\.(mp4|webm)$/i)) data = `<video src="${data}" controls style="max-width:100%"></video>`;
+            // Media Rendering
+            if(data.match(/\.(jpg|jpeg|png|gif)$/i)) data = `<img src="${data}" class="media-box" onclick="window.open(this.src)">`;
+            else if(data.match(/\.(mp4|webm)$/i)) data = `<video src="${data}" controls class="media-box"></video>`;
 
-            const unsend = isMe ? `<span class="unsend-trigger" onclick="unsend('${pkt.pid}')">[PURGE_MSG]</span>` : '';
-            el.innerHTML = data + unsend;
+            const ticks = isMe ? `<span class="read-tick" id="seen_${pkt.pid}">✓</span>` : '';
+            div.innerHTML = `<div>${data}</div><div class="msg-info">${pkt.stamp} ${ticks}</div>`;
             
-            stream.appendChild(el);
-            stream.scrollTop = stream.scrollHeight;
+            flow.appendChild(div);
+            flow.scrollTop = flow.scrollHeight;
+
+            if(!isMe && activePeer === pkt.from) {
+                socket.emit('mark_seen', { from: session.user, to: pkt.from, pid: pkt.pid });
+            }
         }
 
-        // Feature: Immediate Unsend
-        function unsend(pid) { socket.emit('msg_kill_req', { pid: pid }); }
-        socket.on('msg_killed', (d) => { document.getElementById(d.pid)?.remove(); });
+        // Real-Time Sync
+        socket.on('broadcast_receive', (p) => { if(activePeer === p.from) append(p, false); });
+        
+        socket.on('seen_confirmed', (d) => {
+            const tick = document.getElementById(`seen_${d.pid}`);
+            if(tick) { tick.innerText = '✓✓'; tick.style.color = 'var(--safe)'; }
+        });
 
-        // Feature: Typing State
         function emitTyping() {
-            socket.emit('node_typing', { user: userState.id, to: currentTarget });
-            clearTimeout(typeTimer);
-            typeTimer = setTimeout(() => socket.emit('node_typing_stop', { to: currentTarget }), 1500);
+            socket.emit('peer_typing', { from: session.user, to: activePeer });
+            clearTimeout(tOut);
+            tOut = setTimeout(() => socket.emit('peer_typing_stop', { to: activePeer }), 1500);
         }
-        socket.on('node_typing_ui', (d) => { document.getElementById('typing-indicator').innerText = `${d.user} is accessing buffer...`; });
-        socket.on('node_typing_stop_ui', () => { document.getElementById('typing-indicator').innerText = ''; });
 
-        // Feature: Mutual Purge
-        function requestPurge() {
-            if(currentTarget) socket.emit('purge_channel_req', { u1: userState.id, u2: currentTarget });
-        }
-        socket.on('trigger_glitch_purge', () => {
-            document.getElementById('purge-overlay').style.display = 'block';
+        socket.on('is_typing', (d) => { if(activePeer === d.from) document.getElementById('typing-label').innerText = "DECRYPTING_DATA_STREAM..."; });
+        socket.on('no_typing', () => { document.getElementById('typing-label').innerText = ""; });
+
+        // Purge & Attachments
+        function nuclearPurge() { socket.emit('purge_req', { u1: session.user, u2: activePeer }); }
+        
+        socket.on('start_purge', () => {
+            document.getElementById('purge-fx').style.display = 'block';
             setTimeout(() => {
-                document.getElementById('chat-stream').innerHTML = '';
-                document.getElementById('purge-overlay').style.display = 'none';
+                document.getElementById('chat-flow').innerHTML = '';
+                document.getElementById('purge-fx').style.display = 'none';
             }, 2000);
         });
 
-        // User Directory Logic
-        function syncNodes() {
+        function openUplink() { document.getElementById('uplink').click(); }
+        function handleUplink(el) {
+            const file = el.files[0];
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                const pkt = {
+                    pid: 'p_' + Date.now(),
+                    from: session.user,
+                    to: activePeer,
+                    payload: CryptoJS.AES.encrypt(reader.result, AES_KEY).toString(),
+                    stamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                };
+                socket.emit('secure_broadcast', pkt);
+                append(pkt, true);
+            };
+            if(file) reader.readAsDataURL(file);
+        }
+
+        // Directory Sync
+        function syncDirectory() {
             const list = document.getElementById('node-list');
-            const demoNodes = ['Alpha_Node', 'Delta_6', 'Ghost_Link']; // Replace with your Python server user fetch
-            demoNodes.forEach(nodeID => {
+            list.innerHTML = '';
+            // In a production server, this list is received via 'directory_update' socket event
+            ['System_Admin', 'Ninja_Elite', 'Ghost_Protocol', 'Shadow_Node'].forEach(u => {
+                if(u === session.user) return;
                 const d = document.createElement('div');
                 d.className = 'node';
-                d.innerHTML = `<span class="dot online"></span> ${nodeID}`;
-                d.onclick = () => {
-                    currentTarget = nodeID;
-                    document.getElementById('active-node-name').innerText = `CHANNEL: ${nodeID}`;
-                    document.querySelectorAll('.node').forEach(n => n.classList.remove('active'));
-                    d.classList.add('active');
-                };
+                d.innerHTML = `<span>${u}</span><span style="font-size:9px; color:var(--safe)">LINK_ACTIVE</span>`;
+                d.onclick = () => enterChat(u);
                 list.appendChild(d);
             });
         }
